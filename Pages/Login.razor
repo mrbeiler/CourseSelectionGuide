@@ -1,5 +1,7 @@
 @page "/login"
 @layout LoginLayout
+@inject SupabaseService SupabaseService
+@inject NavigationManager Nav
 
 <div class="login-container">
     <div class="login-card">
@@ -30,7 +32,9 @@
                     <InputText type="password" class="form-control" @bind-Value="loginModel.Password" />
                 </div>
 
-                <button class="btn-login">Sign In</button>
+                <button class="btn-login" type="submit">Sign In</button>
+
+                <p class="text-danger">@message</p>
             </EditForm>
         </div>
 
@@ -39,11 +43,28 @@
 
 @code {
     private LoginModel loginModel = new();
+    private string message = "";
 
-    private void HandleLogin()
+    private async Task HandleLogin()
     {
-        Console.WriteLine($"Email: {loginModel.Email}");
-        Console.WriteLine($"Password: {loginModel.Password}");
+        try
+        {
+            var success = await SupabaseService.Login(loginModel.Email, loginModel.Password);
+
+            if (success)
+            {
+                Nav.NavigateTo("/");
+            }
+            else
+            {
+                message = "Invalid login";
+            }
+        }
+        catch (Exception ex)
+        {
+            message = "Error connecting to database.";
+            Console.WriteLine(ex.Message);
+        }
     }
 
     public class LoginModel

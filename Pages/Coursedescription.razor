@@ -1,0 +1,662 @@
+@page "/courselist"
+@using CourseSelectionGuide.Models
+
+<h3 class="mb-4">📚 Course Selection Guide</h3>
+
+<div class="accordion" id="courseAccordion">
+    @foreach (Course course in courses)
+    {
+        <div class="accordion-item mb-2 border rounded shadow-sm" @key="course.Id">
+
+            @{
+                string headingId = $"heading-{course.Id}";
+                string collapseId = $"collapse-{course.Id}";
+            }
+
+            <!-- Header -->
+            <h2 class="accordion-header" id="@headingId">
+                <button class="accordion-button collapsed"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#@collapseId"
+                        aria-expanded="false"
+                        aria-controls="@collapseId">
+
+                    <span class="fw-semibold">@course.SubjectName</span>
+
+                    <span class="ms-auto d-flex align-items-center gap-2">
+                        <span class="badge bg-primary rounded-pill">
+                            @course.Credits cr
+                        </span>
+
+                        <span class="badge bg-secondary rounded-pill">
+                            @course.CreditType
+                        </span>
+                    </span>
+
+                </button>
+            </h2>
+
+            <!-- Body -->
+            <div id="@collapseId"
+                 class="accordion-collapse collapse"
+                 aria-labelledby="@headingId"
+                 data-bs-parent="#courseAccordion">
+
+                <div class="accordion-body">
+
+                    <p class="mb-3 text-muted fst-italic">
+                        @course.SubjectDescription
+                    </p>
+
+                    <div class="row g-2">
+
+
+                        <div class="col-sm-4">
+                            <div class="fw-semibold text-uppercase small text-muted">Credits</div>
+                            <div>@course.Credits (@course.CreditType)</div>
+                        </div>
+
+                        <div class="col-sm-4">
+                            <div class="fw-semibold text-uppercase small text-muted">Limitations</div>
+                            <div>@course.Limitations</div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    }
+</div>
+
+@code {
+    public List<Course> courses = new()
+    {
+        new Course
+        {
+            Id = 1,
+            SubjectName = "OT Survey",
+            SubjectDescription = "Old Testament survey is a survey of God's redemptive plan from the Garden of Eden to the return of the Babylonian Exiles. This survey emphasizes book content, character examples, and how God reveals himself and relates to His creation and people.",
+            Credits = 1,
+            Limitations = "10th grade only",
+            CreditType = "Bible"
+        },
+        new Course
+        {
+            Id = 2,
+            SubjectName = "Englsih 2",
+            SubjectDescription = "Sophomore English strengthens communication skills through grammar, vocabulary, literature, and writing. Grammar reviews freshman topics and adds concepts like mood and abstract nouns. Vocabulary focuses on word origins and analogies. Students analyze character, plot, and theme in works like Paradise Lost, Julius Caesar, and Don Quixote. Writing includes essays, poetry, a critical book review, and an Author Research Project, alongside public speaking.",
+            Credits = 1,
+            Limitations = "10th grade Only",
+            CreditType = "English"
+        },
+        new Course
+        {
+            Id = 3,
+            SubjectName = "World History",
+            SubjectDescription = "World History surveys early civilizations and nations to better understand the foundation of our present world. Units of study include early civilizations, regional civilizations, early modern times, Enlightenment and revolution, industrialism, globalization, the World Wars, and contemporary history. Writing, reading and vocabulary, critical thinking, and note-taking instruction provide students with the necessary skills for studying history, and students additionally gain an understanding of how the history of the Church is shaped by the growth of nations.",
+            Credits = 1,
+            Limitations = "10th grade only",
+            CreditType = "History"
+        },
+        new Course
+        {
+            Id = 4,
+            SubjectName = "Biology",
+            SubjectDescription = "Biology touches on these major areas of study: cytology, botany, genetics, microbiology and zoology. There is a brief survey of the five-kingdom system of classification of life with a special emphasis on the animal kingdom. Many biology labs give the student a chance to have a hands-on approach to learning in these many areas of study.",
+            Credits = 1,
+            Limitations = "10th grade only",
+            CreditType = "Science"
+        },
+        new Course
+        {
+            Id = 5,
+            SubjectName = "Physical Education",
+            SubjectDescription = "Physical exercise is important for all students. One of the goals for the class is to help students stay in good physical condition. Another goal is to teach students skills in playing various games such as soccer, basketball, softball, and volleyball. Students learn the rules of each game and are expected to display sportsmanship. Students should expect some in-class and some out-of-class assignments.",
+            Credits = 0.5f,
+            Limitations = "10th grade only",
+            CreditType = "Physical Education"
+        },
+        new Course
+        {
+            Id = 6,
+            SubjectName = "Geometry",
+            SubjectDescription = "Geometry is the study of lines and figures. Students should take it as a sophomore after they have completed Algebra I. The class begins by introducing key concepts and terminology and leads to logical reasoning through studying relations of geometry. Considerable time is spent with triangle congruencies.",
+            Credits = 1,
+            Limitations = "10th grade only",
+            CreditType = "Math"
+        },
+        new Course
+        {
+            Id = 7,
+            SubjectName = "Large Chorus",
+            SubjectDescription = "Large chorus is the all-school chorus which performs at the Christmas Concert and Spring Concert. Students will practice weekly for the four-part a cappella concerts.",
+            Credits = 0.5f,
+            Limitations = "10th grade only",
+            CreditType = "Music"
+        },
+        new Course
+        {
+            Id = 8,
+            SubjectName = "Worldviews",
+            SubjectDescription = "This Bible course introduces six basic worldviews, including Christianity, and equips them to engage the world through the lens of Scripture. Students will learn how to love others and enjoy God’s world more intelligently, identify and engage the worldviews of our time, and appreciate how belief in Christ affects all aspects of life, in addition to developing critical thinking, research and communication skills. They will grow in their understanding of Scripture and in their ability to live out a consistent Christian worldview.",
+            Credits = 1,
+            Limitations = "10th grade only",
+            CreditType = "Bible"
+        },
+        new Course
+        {
+            Id = 9,
+            SubjectName = "English 3",
+            SubjectDescription = "Junior English emphasizes logical and critical thinking through grammar, vocabulary, American literature, and writing. Students review grammar basics and refine sentence structure. Literature highlights satire, local color, and imagery in works by Twain, Poe, and others, including The Scarlet Letter. Writing includes essays, book reports, and research papers. Speaking opportunities include recitations, discussions, and presentations.",
+            Credits = 1,
+            Limitations = "11th grade only",
+            CreditType = "English"
+        },
+        new Course
+        {
+            Id = 10,
+            SubjectName = "Church History",
+            SubjectDescription = "This course surveys 21 centuries of Christianity with a specific concentration on the growth of the Anabaptist perspective. The course begins with a look at Acts and is followed by a study of the influence of early church fathers, Constantine, Augustine, the Crusades, powerful popes, and the Renaissance. The Reformation, pietism, missions, and deism are examined. Anabaptism’s rise and spread into Holland, Moravia, and finally the West are given attention. After a look at the growth of Anabaptism around the world in the 20 th and 21 st centuries, Anabaptism is compared with other Chrisitan disciplines.",
+            Credits = 1,
+            Limitations = "11th grade only",
+            CreditType = "History"
+        },
+        new Course
+        {
+            Id = 11,
+            SubjectName = "Large Chorus",
+            SubjectDescription = "Large chorus is the all-school chorus which performs at the Christmas Concert and Spring Concert. Student will practice weekly for the four-part a cappella concerts.",
+            Credits = 0.25f,
+            Limitations = "11th grade only",
+            CreditType = "Large chorus"
+        },
+        new Course
+        {
+            Id = 12,
+            SubjectName = "Math",
+            SubjectDescription = "Study classic and modern literary works.",
+            Credits = 1,
+            Limitations = "11th grade only",
+            CreditType = "English"
+        },
+        new Course
+        {
+            Id = 13,
+            SubjectName = "Science",
+            SubjectDescription = "Study classic and modern literary works.",
+            Credits = 1,
+            Limitations = "11th grade only",
+            CreditType = "English"
+        },
+        new Course
+        {
+            Id = 14,
+            SubjectName = "Anabaptist Essentials",
+            SubjectDescription = "This course will introduce students to kingdom living by teaching the story of Scripture. Students will track the establishment of God’s kingdom through the Biblical narrative of Creation, the fall, restoration through Israel, Jesus’s kingship, the church, and new creation. Students will additionally explore essentials of Anabaptist expression, including how Anabaptists define Christianity, how they interpret Scripture, who is one’s final authority, what is essential for community, how to organize for community and accountability, how individuals are reconciled to God, how members are reconciled to each other, and how to reconcile conflicts in the world. Finally, students will explore a variety of contemporary issues facing the church, using the story of Scripture, kingdom living, and Anabaptist principles as guiding lenses.",
+            Credits = 1,
+            Limitations = "12th grade only",
+            CreditType = "Bible"
+        },
+        new Course
+        {
+            Id = 15,
+            SubjectName = "English 4",
+            SubjectDescription = "Study classic and modern literary works.",
+            Credits = 1,
+            Limitations = "12th grade only",
+            CreditType = "English"
+        },
+        new Course
+        {
+            Id = 16,
+            SubjectName = "Health",
+            SubjectDescription = "The aim of this course is to understand and appreciate the interrelationship and interdependence of all aspects of the human being, both physical and non-physical. Students will learn how to attain and maintain complete well-being through an in-depth study of the physical body systems and non-physical aspects of man. Emphasis will be placed on developing a balanced lifestyle in which the needs of all aspects of the person are attended to on a regular basis that we might maintain our being in the condition intended by our Creator for His service and His glory.",
+            Credits = 0.5f,
+            Limitations = "12th grade only",
+            CreditType = "science"
+        },
+        new Course
+        {
+            Id = 17,
+            SubjectName = "Speech",
+            SubjectDescription = "This course prepares students for public speaking opportunities beyond high school, including giving a presentation at work, teaching Sunday School, or giving a eulogy. Students learn the art of presenting by studying audience, topic selection, body language, research skills, persuasion/rhetoric, and occasion.",
+            Credits = 0.5f,
+            Limitations = "12th grade only",
+            CreditType = "Engish"
+        },
+        new Course
+        {
+            Id = 18,
+            SubjectName = "Large Chorus",
+            SubjectDescription = "Large chorus is the all-school chorus which performs at the Christmas Concert and Spring Concert. Students will practice weekly for the four-part a cappella concerts.",
+            Credits = 0.5f,
+            Limitations = "12th grade only",
+            CreditType = "Large Chorus"
+        },
+        new Course
+        {
+            Id = 19,
+            SubjectName = "Fundamentals of Art",
+            SubjectDescription = "Students will learn about the elements and principles of design as they explore different mediums. Students will be introduced to drawing, painting, printmaking, and sculpture. They will continue to build skill and discover ideas through sketching and exposure to art history. Prerequisite for 2 – Dimensional Design.",
+            Credits = 0.5f,
+            Limitations = "9th and 10th grade only",
+            CreditType = "Art"
+        },
+        new Course
+        {
+            Id = 20,
+            SubjectName = "Dimensional Design",
+            SubjectDescription = "Students will continue to build skill in the areas of 2-dimensional design. Mediums such as drawing, painting and printmaking will be explored in depth. Students will be exploring the use of these mediums and a variety of techniques used throughout art history. Each student will keep a sketchbook to brainstorm and practice technique.",
+            Credits = 0.5f,
+            Limitations = "11th and 12th grade only",
+            CreditType = "Science"
+        },
+        new Course
+        {
+            Id = 21,
+            SubjectName = "Photography",
+            SubjectDescription = "Students will be introduced to black and white film photography and processing. They will also experiment with digital photography and a brief introduction to Adobe Photoshop. Students will learn how to control the camera’s functions and take better pictures. Each student will hand in a portfolio of work at the end of the course.",
+            Limitations = "12th grade only",
+            CreditType = "Art"
+        },
+        new Course
+        {
+            Id = 22,
+            SubjectName = "Videogpraphy",
+            SubjectDescription = "This class will focus on ways to communicate through the powerful channel of visual media. Students will learn the basics of video production including planning a project, taking quality video footage, and editing the footage with DaVinci Resolve. Projects will include music videos, interviews, VLOGs, and short sketches.",
+            Credits = 0.5f,
+            Limitations = "12th grade only",
+            CreditType = "Art"
+        },
+        new Course
+        {
+            Id = 23,
+            SubjectName = "Yearbook",
+            SubjectDescription = "Students collaborate to create the school’s yearbook from start to finish. They will take and edit photos, write captions and articles, and design pages using digital publishing tools. This course builds skills in photography, journalism, graphic design, and teamwork.",
+            Credits = 0.25f,
+            Limitations = "11th and 12th grade only",
+            CreditType = "Art"
+        },
+         new Course
+        {
+            Id = 24,
+            SubjectName = "Evangelism Team",
+            SubjectDescription = "Students will learn in the classroom about evangelism and defending their faith. Practical experience is gained through tract distribution, community youth gym nights, and programs in churches, prisons and youth centers.",
+            Credits = 0.5f,
+            Limitations = "11th and 12th grade only",
+            CreditType = "Bible"
+        }, 
+        new Course
+        {
+            Id = 25,
+            SubjectName = "Quiz Team",
+            SubjectDescription = "Students participate in MACSA quiz team events. They will be required to memorize the prescribed passage and compete on the quiz team.",
+            Credits = 1,
+            Limitations = "11th and 12th grade only",
+            CreditType = "Bible"
+        },
+         new Course
+        {
+            Id = 26,
+            SubjectName = "Advanced Word",
+            SubjectDescription = "This class continues the computer applications course by focusing on the advanced functions available in a word processor like mail merges and",
+            Credits = 0.25f,
+            Limitations = "10th grade only",
+            CreditType = "Buisness"
+        }, 
+        new Course
+        {
+            Id = 27,
+            SubjectName = "Intro to PowerPoint",
+            SubjectDescription = "This ¼ credit class continues the computer applications course by introducing PowerPoint software packages.",
+            Credits = 0.25f,
+            Limitations = "10th grade only",
+            CreditType = "Buisness"
+        }, 
+        new Course
+        {
+            Id = 28,
+            SubjectName = "Advacned Excel",
+            SubjectDescription = "This ¼ credit class continues the computer applications course by focusing on the advanced functions available in a spreadsheet program like lookup tables and complicated business formulas.",
+            Credits = 0.25f,
+            Limitations = "1oth grade only",
+            CreditType = "Buisness"
+        }, 
+        new Course
+        {
+            Id = 29,
+            SubjectName = "Introduction to QuickBooks",
+            SubjectDescription = "This ¼ credit class introduces QuickBooks an industry standard small business accounting software package. After completing this course, a student will be able to use QuickBooks.",
+            Credits = 0.25f,
+            Limitations = "10th grade only",
+            CreditType = "Buisness"
+        }, 
+        new Course
+        {
+            Id = 30,
+            SubjectName = "Accounting 1",
+            SubjectDescription = "Two years of business accounting provides students with an accounting education comparable to one year of post-secondary business college. After an introduction to the basic principles of accounting, students learn the procedures for keeping business records for a service business, a departmentalized merchandising business, and a light manufacturing industry. Sole proprietorships in the first semester of Accounting 1 give way to instruction in partnership accounting and corporate accounting, both of which are covered in greater detail in Accounting 2.",
+            Credits = 1,
+            Limitations = "11th and 12th grade only",
+            CreditType = "Buisness"
+        },
+         new Course
+        {
+            Id = 31,
+            SubjectName = "Accounting 2",
+            SubjectDescription = "Accounting 2 builds on the principles learned in Accounting 1 with a focus on partnership and corporate accounting. Students will develop accuracy and practical accounting skills. They will also put their business and accounting skills to the test by operating FMH's Snack Shop.",
+            Credits = 1,
+            Limitations = "11th and 12th grade only",
+            CreditType = "Buisness"
+        },
+         new Course
+        {
+            Id = 32,
+            SubjectName = "Home Ec",
+            SubjectDescription = "Activities include developing beginning sewing skills and the use, care, and selection of a sewing machine. Potholders, aprons, small comforters and bags will be produced. Cooking and baking skills, food safety rules, nutrition, shopping strategies, and hands-on food prep will be included.",
+            Credits = 0.5f,
+            Limitations = "9th-12th grade only",
+            CreditType = "Domestic Arts"
+        },
+        new Course
+        {
+            Id = 33,
+            SubjectName = "Home Ec 2",
+            SubjectDescription = "This will be a continuation of Home Ec 1 that will include sewing, cooking, entertaining, and home care.",
+            Credits = 0.5f,
+            Limitations = "10th-12th grade only",
+            CreditType = "Domestic Arts"
+        },
+        new Course
+        {
+            Id = 34,
+            SubjectName = "Advanced Home Ec",
+            SubjectDescription = "This class emphasizes the creative aspects of domestic arts, including ethnic foods, cake decorating, garnishing food, etc. Household management will be discussed. Cooking and baking skills will be more challenging than in previous classes. Canning and freezing may be included.",
+            Credits = 0.5f,
+            Limitations = "11th-12th grade only",
+            CreditType = "Domestic Arts"
+        },
+        new Course
+        {
+            Id = 35,
+            SubjectName = "Child Psychology &amp; Development",
+            SubjectDescription = "This class follows child growth and development from conception to six years old. We will discuss childhood conditions, basic First Aid, etc. Occasionally a guest speaker will share on child training, household management, etc.",
+            Credits = 0.5f,
+            Limitations = "12th grade girls only",
+            CreditType = "Domestic Arts"
+        },
+        new Course
+        {
+            Id = 36,
+            SubjectName = "Cabin Living",
+            SubjectDescription = "This class will teach young men to live on their own whether at home or on the mission field. Topics will include some in cooking and sewing.",
+            Credits = 0.5f,
+            Limitations = "12th grade guys only",
+            CreditType = "Domestic Arts"
+        },
+        new Course
+        {
+            Id = 37,
+            SubjectName = "Spanish 1",
+            SubjectDescription = "Students learn to communicate in Spanish at a novice-level by studying themed chapters that introduce basic vocabulary and grammar. Students also study Spanish-speaking countries around the world.",
+            Credits = 1,
+            Limitations = "10th-12th grade only",
+            CreditType = "Foreign Language"
+        },
+        new Course
+        {
+            Id = 38,
+            SubjectName = "Spanish 2",
+            SubjectDescription = "Students in Spanish 2 continue to build their vocabularies and increase their knowledge of Spanish grammar. Ability to communicate, both to understand and to express oneself, is developed in this course. Completion of Spanish II may qualify a student to enter a college level Spanish course.",
+            Credits = 1,
+            Limitations = "10th-12th grade only",
+            CreditType = "Foreign Language"
+        },
+        new Course
+        {
+            Id = 39,
+            SubjectName = "Spanish 3",
+            SubjectDescription = "Spanish 3 continues to build vocabulary and confidence. Most of the tenses are covered including when and how to use them. Speaking, writing, and cultural awareness are an important part of this course.",
+            Credits = 1,
+            Limitations = "10th-12th grade only",
+            CreditType = "Foreign Language"
+        },
+        new Course
+        {
+            Id = 40,
+            SubjectName = "American Government &amp; Current Events",
+            SubjectDescription = "This course explores the foundations, structure, and functions of American government alongside current national and global events. Students will examine political systems and contemporary issues through class discussion and analysis. All content will be approached from an Anabaptist perspective, emphasizing Christlike citizenship, nonresistance, and living faithfully within a secular society.",
+            Credits = 0.5f,
+            Limitations = "10th-12th grade only",
+            CreditType = "History"
+        },
+        new Course
+        {
+            Id = 41,
+            SubjectName = "Wood Shop Practicum",
+            SubjectDescription = "Wood Shop Practicum is a further extension of Introduction to Wood Shop. Students will be expected to undertake more involved projects such as cabinets, desks etc. Topics such as cabinet construction, paneled door making, drawer making, and installation of hardware, veneering and use of Formica could be covered. (Students are expected to cover the cost of wood for personal projects.)",
+            Credits = 0.5f,
+            Limitations = "10th and 11th grade only",
+            CreditType = "INDUSTRIAL ARTS"
+        },
+        new Course
+        {
+            Id = 42,
+            SubjectName = "Introduction to Small Engines",
+            SubjectDescription = "Students will be introduced to engine technology; they will learn the basic systems and parts identification.",
+            Credits = 0.5f,
+            Limitations = "10th and 11th grade only",
+            CreditType = "Industrial Arts"
+        },
+         new Course
+        {
+            Id = 43,
+            SubjectName = "Advanced Engine Systems",
+            SubjectDescription = "Students will be introduced to engine technology; they will learn the more advanced engine systems and digital systems.",
+            Credits = 0.5f,
+            Limitations = "11th and 12th grade only",
+            CreditType = "Industrial Arts"
+        }, 
+        new Course
+        {
+            Id = 44,
+            SubjectName = "Basic Electricity",
+            SubjectDescription = "This course is designed for anyone who has an interest in electricity. Areas presently being studied are Ohm&#39;s law, National Electric Code, residential wiring, and basic switching applications. Students will study the theory of the areas mentioned as well as having the opportunity to demonstrate their wiring skills with lifelike simulations of many of the principles studied.",
+            Credits = 0.5f,
+            Limitations = "11th and 12th grade only",
+            CreditType = "Industrial Arts"
+        }, 
+        new Course
+        {
+            Id = 45,
+            SubjectName = "CAD",
+            SubjectDescription = "Computer-aided design focuses on 3D software design for applications in engineering design and manufacturing. Students will be introduced to 3D design using advanced 3D modeling, visualization technologies, and Fusion 360 software. Students will create 3D models that are suitable for 3D printing and will learn about the different models and drawing specs that are required by the different manufacturing technologies today.",
+            Credits = 0.5f,
+            Limitations = "11th and 12th grade only",
+            CreditType = "Industrial Arts"
+        }, 
+        new Course
+        {
+            Id = 46,
+            SubjectName = "Car Care",
+            SubjectDescription = "Car care takes a project vehicle and works, fixes or restores it to good working condition. May include engine work, body work, maintenance and issues to keep in mind when purchasing a vehicle. (Students are expected to cover the costs for personal projects.)",
+            Credits = 0.5f,
+            Limitations = "11th and 12th grade only",
+            CreditType = "Industrial Arts"
+        }, 
+        new Course
+        {
+            Id = 47,
+            SubjectName = "Welding 1 & 2",
+            SubjectDescription = "½ credit courses in welding. Welding 1 gives the student an introduction to the theory and the basic skills needed to weld using electric stick and oxyacetylene equipment. Welding 2 is an extension of these skills. This course is graded mainly on the welding skills demonstrated by the students. Welds include butt, fillet and lapp welds made in the flat, horizontal, and vertical positions. (Students are expected to cover the costs for personal projects.)",
+            Credits = 0.5f,
+            Limitations = "10-12th grade only",
+            CreditType = "Industrial Arts"
+        }, 
+        new Course
+        {
+            Id = 48,
+            SubjectName = "Physical Fitness",
+            SubjectDescription = "This course is designed to provide the student with a basic knowledge and understanding of physical fitness. In addition, the course will help the student assess his/her own fitness level. A large part of class time will be spent doing a variety of activities (stretches, running, weightlifting etc.) which will help the students attain a suitable level of fitness. (Offered on a limited basis)",
+            Credits = 0.5f,
+            Limitations = "11th and 12th grade only",
+            CreditType = "Physicla Education"
+        },
+        new Course
+        {
+            Id = 49,
+            SubjectName = "Basketball",
+            SubjectDescription = "This course is designed to help the students excel at basketball. Emphasis will be placed on the fundamental skills, rules, and basic strategies of the game. Games with other schools will be scheduled and possibly a tournament.",
+            Credits = 0.25f,
+            Limitations = "11th and 12th grade only",
+            CreditType = "Physical Education"
+        }, 
+        new Course
+        {
+            Id = 50,
+            SubjectName = "Volleyball",
+            SubjectDescription = "This course is designed to help the students excel at volleyball. Students will be taught advanced strategies and drilled on fundamental skills, rules and basic strategies of the game. Students are required to attend up to two practices a week outside of normal school hours. Games and tournaments with other schools will be scheduled.",
+            Credits = 0.25f,
+            Limitations = "11th and 12th grade only",
+            CreditType = "Physical Education"
+        }, 
+        new Course
+        {
+            Id = 51,
+            SubjectName = "Algebra 2",
+            SubjectDescription = "Algebra 2 reviews and builds on concepts from Algebra 1. Students should have a basic knowledge of areas and volumes for the basic shapes. Function notation is introduced and used throughout the book. Graphing of nonlinear equations is introduced as well as the imaginary number system. Emphasis is placed on solving equations and systems of equations. Prerequisite for Pre-Calculus.",
+            Credits = 1,
+            Limitations = "11th and 12th grade only",
+            CreditType = "Mathematics"
+        }, 
+        new Course
+        {
+            Id = 52,
+            SubjectName = "Accounting 1",
+            SubjectDescription = "Students learn the fundamentals of accounting and how to manage financial records for different types of businesses. The course includes hands-on projects to equip students with practical knowledge for real-world financial management. Prerequisite for Accounting 2.",
+            Credits = 1,
+            Limitations = "11th and 12th grade only",
+            CreditType = "Mathematics"
+        }, 
+        new Course
+        {
+            Id = 53,
+            SubjectName = "Accounting 2",
+            SubjectDescription = "Students will be introduced to engine technology; they will learn the more advanced engine systems and digital systems.",
+            Credits = 1,
+            Limitations = "11th and 12th grade only",
+            CreditType = "Buisness"
+        }, 
+        new Course
+        {
+            Id = 54,
+            SubjectName = "Personal Finance",
+            SubjectDescription = "Personal finance covers consumer applications are such as budgeting, banking, personal record keeping, buying and owning a car, and taxes.",
+            Credits = 1,
+            Limitations = "11th and 12th grade only",
+            CreditType = "Mathematics"
+        }, 
+        new Course
+        {
+            Id = 55,
+            SubjectName = "Introduction to Computer Science",
+            SubjectDescription = "Learn and explore the fundamentals of computer science. Students who want to learn more about how computers work will watch 2+ hours of video lectures each week and complete one problem set and one lab per week (1-3 hours) with an instructor. Topics covered include data storage, algorithms, program control, and programming languages (like Scratch, C, Python, JavaScript). The course ends with a final project where students develop a program from their new-found computer knowledge. *May be considered a Math or Science, but not both.",
+            Credits = 1,
+            Limitations = "11th and 12th grade only",
+            CreditType = "Mathematics"
+        }, 
+        new Course
+        {
+            Id = 56,
+            SubjectName = "Pre Calculus",
+            SubjectDescription = "Pre-Calc is offered periodically for advanced students. Calculus topics are introduced to give students planning on entering a science or math field a strong basis for beginning a science/math curriculum at a college or university. This course is not designed to replace a first semester college calculus course but to provide a strong foundation for collegiate mathematics for the science/math major.",
+            Credits = 1,
+            Limitations = "11th and 12th grade only",
+            CreditType = "Mathematics"
+        }, 
+        new Course
+        {
+            Id = 57,
+            SubjectName = "Faith Chorale ",
+            SubjectDescription = " Faith Chorale is the touring choral group of FMH and is an elective for juniors and seniors. Entrance is by audtiion. The group rehearses daily and presents programs in local churches as well as on a tour. The class will engage the whole person in music, with emphasis placed on sight reading music, proper vocal technique, and expression. Students are required to do some rehearsal out of class and to memorize all the music performed. Repertoire includes classical pieces, spirituals, hymns, anthems, and contemporary choral literature. Music appreciation will be encouraged through discussion of the repertoire. (Sight singing strongly encouraged and may be required based on the audition.)",
+            Credits = 0.5f,
+            Limitations = "11th and 12th grade only",
+            CreditType = "Music"
+        }, 
+        new Course
+        {
+            Id = 58,
+            SubjectName = "Class Voice",
+            SubjectDescription = "Class Voice is designed to help students develop confidence in their own voice through solo singing in an informal and open classroom atmosphere. Students will be taught correct breathing and posture and will be shown how to improve pronunciation, tone quality, and vocal projection. In addition to solo singing, some emphasis will be placed on small group singing such as duets, trios, and quartets.",
+            Credits = 0.5f,
+            Limitations = "11th and 12th grade only",
+            CreditType = "Music"
+        }, 
+        new Course
+        {
+            Id = 59,
+            SubjectName = "Sight Singing 1",
+            SubjectDescription = "The purpose of these courses is to improve music reading ability and is strongly encouraged for those who want to sing on chorale. Emphasis will be placed on reading rhythms, melodic and harmonic parts from the hymnal, as well as from solo and choral literature. One need not be a great sight reader to enroll; all you need is a will to learn. For those who have always wanted to be able to read music, this class will help develop your musical skills.",
+            Credits = 0.5f,
+            Limitations = "10th grade only",
+            CreditType = "Music"
+        }, 
+        new Course
+        {
+            Id = 60,
+            SubjectName = "Advanced Music Theory",
+            SubjectDescription = "Students will explore chord structure, harmonic progressions, composition, and music appreciation. Through analysis and creative projects, they deepen their understanding of how music is constructed and communicates. This course builds on basic theory and encourages both technical growth and artistic expression.",
+            Credits = 0.5f,
+            Limitations = "11th grade only",
+            CreditType = "Music"
+        }, 
+        new Course
+        {
+            Id = 61,
+            SubjectName = "Chemistry",
+            SubjectDescription = "A course desgined for students with a desire for knowledge in chemistry or for the student who needs this background for further education in college. Students will not only focus on gathering facts, but also on applying that knowledge to thoughtfully analyze problems and logically develop solutions. Areas to be studied include atomic structure, mole concepts, and chemical reactions using chemical shorthand. This course is a must for college-bound students.",
+            Credits = 1,
+            Limitations = "11th and 12th grade only",
+            CreditType = "Science"
+        }, 
+        new Course
+        {
+            Id = 62,
+            SubjectName = "Anatomy and Physiology",
+            SubjectDescription = "This course focuses on the anatomy and physiology of the human body, emphasizing the close connection between form and function. It provides a strong foundation for students interested in medical careers or advanced scientific studies. In addition, this class helps to deepen appreciation for the complexity and uniqueness of God’s creation.",
+            Credits = 1,
+            Limitations = "11th and 12th grade only",
+            CreditType = "Science"
+        }, 
+        new Course
+        {
+            Id = 63,
+            SubjectName = "Physics",
+            SubjectDescription = "Students will learn about the physical laws which explain how God ordered the physical universe. Topics studied include kinematics, mechanics, simple harmonic motion, fluid motion, and gas theory.",
+            Credits = 1,
+            Limitations = "11th and 12th grade only",
+            CreditType = "Science"
+        }, 
+        new Course
+        {
+            Id = 64,
+            SubjectName = "Teachers for Tomorrow",
+            SubjectDescription = "The Teachers for Tomorrow program is a partnership between the Division of Teacher Education at Bob Jones University and partner Christian Schools. Faith will be partnering with Fairhaven Christian school and Weavertown Mennonite School. The Teachers for Tomorrow program is in two components: an online curriculum provided by the Division of Teacher Education at Bob Jones University and a field experience component at one of the schools. Over the course of a school year, the student will complete 30 weeks of study as well as spend 2-4 hours a week with an assigned classroom teacher at his/her Christian school. Students will need to fill out a packet that is available at the office. There is no tuition discount for this program.",
+            Credits = 1,
+            Limitations = "12th grade only",
+            CreditType = "Based on time at sponsor location"
+        }, 
+        new Course
+        {
+            Id = 65,
+            SubjectName = "Work Study",
+            SubjectDescription = "Students will earn credit by exploring career readiness skills through research activities and writing assignments as well as through work experience. Students will be part-time employed and will develop general work site competencies and be provided an opportunity to experience the work world. Students must be at school for the required classes. Credits will be based on the amount of time spent at work on an average week.",
+            Credits = 1,
+            Limitations = "12th grade only",
+            CreditType = ""
+        }, 
+    };
+}

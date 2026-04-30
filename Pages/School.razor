@@ -1,0 +1,697 @@
+@* ============================================================
+   StudentSystem.razor
+   - No login page. Set currentStudentName + currentStudentGrade
+     at the top of @code to simulate who is logged in.
+   - Fetches that user from Supabase by Name + Grade on load.
+   - Grade == "Admin" → admin view, else → student schedule view.
+   - Admin: view / add / edit all students via Supabase REST.
+   - Student: sees only their own schedule.
+   ============================================================ *@
+
+@page "/School"
+@layout EmptyLayout
+@inject NavigationManager NavigationManager
+@inject HttpClient Http
+
+<PageTitle>Student Portal</PageTitle>
+
+<style>
+
+    html, body { margin:0; padding:0; min-height:100vh; background:#111111; }
+
+    .page-shell {
+        min-height: 100vh;
+        background: #111111;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Segoe UI', sans-serif;
+        padding: 30px 16px;
+        box-sizing: border-box;
+    }
+
+    .card {
+        background: #ffffff;
+        border-radius: 14px;
+        width: 100%;
+        max-width: 860px;
+        min-height: 480px;
+        box-shadow: 0 8px 40px rgba(0,0,0,.6);
+        padding: 44px 52px;
+        box-sizing: border-box;
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 28px;
+    }
+
+    .btn-logout {
+        background: transparent;
+        color: #6b7280;
+        border: 1px solid #d1d5db;
+        border-radius: 7px;
+        padding: 7px 16px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: border-color .15s, color .15s;
+    }
+    .btn-logout:hover { border-color:#dc2626; color:#dc2626; }
+
+    /* ── Tables ── */
+    .ss-table {
+        width: 100%;
+        border-collapse: collapse;
+        border-radius: 9px;
+        overflow: hidden;
+        box-shadow: 0 1px 4px rgba(0,0,0,.07);
+        font-size: 0.9rem;
+    }
+
+    .ss-table thead tr { background:#6dbf2e; color:#fff; text-align:left; }
+
+    .ss-table th {
+        padding: 11px 14px;
+        font-weight: 600;
+        font-size: 0.74rem;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+    }
+
+    .ss-table td {
+        padding: 11px 14px;
+        border-bottom: 1px solid #f3f4f6;
+        color: #1f2937;
+    }
+
+    .ss-table.student-table  tbody tr:nth-child(even) { background:#f9fafb; }
+    .ss-table.schedule-table tbody tr:nth-child(even) { background:#f9fafb; }
+    .ss-table.schedule-table tbody tr:hover           { background:#f0fce8; }
+
+    .period-num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 27px; height: 27px;
+        border-radius: 50%;
+        background: #6dbf2e;
+        color: #fff;
+        font-size: 0.74rem;
+        font-weight: 700;
+    }
+
+    /* ── Toolbar ── */
+    .table-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .table-toolbar h3 { margin:0; font-size:1.05rem; font-weight:700; color:#111827; }
+
+    .btn-add {
+        background: #6dbf2e; color:#fff; border:none;
+        border-radius: 7px; padding:8px 18px;
+        font-size: 0.84rem; font-weight:600; cursor:pointer;
+        transition: background .15s;
+    }
+    .btn-add:hover { background:#59a824; }
+
+    .btn-edit {
+        background: transparent; color:#6dbf2e;
+        border: 1px solid #6dbf2e; border-radius:6px;
+        padding: 4px 12px; font-size:0.78rem; font-weight:600;
+        cursor: pointer; transition: background .12s, color .12s;
+        margin-right: 6px;
+    }
+    .btn-edit:hover { background:#6dbf2e; color:#fff; }
+
+    .btn-sched {
+        background: transparent; color:#6366f1;
+        border: 1px solid #6366f1; border-radius:6px;
+        padding: 4px 12px; font-size:0.78rem; font-weight:600;
+        cursor: pointer; transition: background .12s, color .12s;
+    }
+    .btn-sched:hover { background:#6366f1; color:#fff; }
+
+    /* ── Modal ── */
+    .modal-backdrop {
+        position: fixed; inset:0;
+        background: rgba(0,0,0,.55);
+        display: flex; align-items:center; justify-content:center;
+        z-index: 1000;
+    }
+
+    .modal {
+        background: #fff; border-radius:12px;
+        padding: 36px 40px; width:100%; max-width:440px;
+        box-shadow: 0 12px 48px rgba(0,0,0,.35);
+        box-sizing: border-box;
+    }
+
+    .modal h3 { margin:0 0 24px; font-size:1.15rem; font-weight:700; color:#111827; }
+
+    .form-group { margin-bottom:16px; }
+
+    .form-group label {
+        display: block; font-size:0.83rem; font-weight:600;
+        color: #374151; margin-bottom:7px;
+    }
+
+    .form-group input {
+        width: 100%; border:1px solid #d1d5db; border-radius:7px;
+        padding: 10px 13px; font-size:0.92rem; color:#111827;
+        background: #eef2fb; box-sizing:border-box; outline:none;
+        transition: border-color .15s, background .15s;
+    }
+    .form-group input:focus { border-color:#6dbf2e; background:#fff; }
+
+    .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:24px; }
+
+    .btn-save {
+        background:#6dbf2e; color:#fff; border:none;
+        border-radius:7px; padding:9px 22px;
+        font-size:0.88rem; font-weight:600; cursor:pointer;
+        transition: background .15s;
+    }
+    .btn-save:hover { background:#59a824; }
+    .btn-save:disabled { background:#a3d977; cursor:not-allowed; }
+
+    .btn-cancel {
+        background:transparent; color:#6b7280;
+        border:1px solid #d1d5db; border-radius:7px;
+        padding:9px 18px; font-size:0.88rem;
+        font-weight:600; cursor:pointer;
+    }
+
+    /* ── Back + schedule header ── */
+    .btn-back {
+        display: inline-flex; align-items:center; gap:5px;
+        background:#6dbf2e; color:#fff; border:none;
+        border-radius:7px; padding:9px 18px;
+        font-size:0.84rem; font-weight:600; cursor:pointer;
+        transition: background .15s; margin-bottom:20px;
+    }
+    .btn-back:hover { background:#59a824; }
+
+    .schedule-header {
+        display: flex; align-items:center; gap:12px;
+        margin-bottom:20px; flex-wrap:wrap;
+    }
+    .schedule-header h2 { margin:0; font-size:1.05rem; font-weight:700; color:#111827; }
+
+    .grade-tag {
+        background:#d1fae5; color:#065f46; border-radius:6px;
+        padding:3px 10px; font-size:0.78rem; font-weight:600;
+    }
+
+    .error-msg { color:#dc2626; font-size:0.82rem; margin-top:6px; }
+
+    /* ── Loading spinner ── */
+    .loading {
+        display: flex; align-items:center; justify-content:center;
+        padding:60px 20px; color:#6b7280; font-size:0.95rem; gap:10px;
+    }
+
+    .spinner {
+        width:22px; height:22px;
+        border:3px solid #e5e7eb;
+        border-top-color:#6dbf2e;
+        border-radius:50%;
+        animation:spin .7s linear infinite;
+    }
+    @@keyframes spin { to { transform:rotate(360deg); } }
+
+</style>
+
+<!-- ══════════════ MARKUP ══════════════ -->
+<div class="page-shell">
+<div class="card">
+
+    @if (isLoading)
+    {
+        <div class="loading">
+            <div class="spinner"></div>
+            <span>Loading…</span>
+        </div>
+    }
+    else if (currentUser is not null)
+    {
+        <!-- Logout -->
+        <div class="topbar">
+            <button class="btn-logout" @onclick="Logout">🚪 Logout</button>
+        </div>
+
+        @* ── ADMIN VIEW ── *@
+        @if (IsAdmin)
+        {
+            @if (!showSchedule)
+            {
+                <div class="table-toolbar">
+                    <h3>All Students</h3>
+                    <button class="btn-add" @onclick="OpenAddModal">+ Add Student</button>
+                </div>
+
+                @if (isFetchingStudents)
+                {
+                    <div class="loading"><div class="spinner"></div><span>Fetching students…</span></div>
+                }
+                else
+                {
+                    <table class="ss-table student-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Grade</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var s in allStudents.Where(x => x.Grade != "Admin"))
+                            {
+                                <tr>
+                                    <td>@s.Name</td>
+                                    <td>@s.Email</td>
+                                    <td>@s.Grade</td>
+                                    <td>
+                                        <button class="btn-edit"  @onclick="() => OpenEditModal(s)">✏️ Edit</button>
+                                        <button class="btn-sched" @onclick="() => AdminViewSchedule(s)">📅 Schedule</button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            }
+            else if (selectedStudent is not null)
+            {
+                <button class="btn-back" @onclick="GoBack">← Back to Students</button>
+                <div class="schedule-header">
+                    <h2>Schedule — @selectedStudent.Name</h2>
+                    <span class="grade-tag">Grade @selectedStudent.Grade</span>
+                </div>
+                @RenderSchedule(selectedStudent)
+            }
+        }
+
+        @* ── STUDENT VIEW — schedule only ── *@
+        else
+        {
+            <div class="schedule-header">
+                <h2>My Schedule</h2>
+                <span class="grade-tag">Grade @currentUser.Grade</span>
+            </div>
+            @RenderSchedule(currentUser)
+        }
+    }
+    else if (!string.IsNullOrEmpty(loadError))
+    {
+        <p style="color:#dc2626; padding:20px;">⚠️ @loadError</p>
+    }
+
+</div>
+</div>
+
+@* ══ ADD / EDIT MODAL ══ *@
+@if (showModal)
+{
+    <div class="modal-backdrop">
+        <div class="modal">
+            <h3>@(isEditing ? "Edit Student" : "Add Student")</h3>
+
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" @bind="formName" placeholder="e.g. John Smith" />
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" @bind="formEmail" placeholder="john@@faithhighschool.org" />
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" @bind="formPassword" placeholder="••••••••" />
+            </div>
+
+            <div class="form-group">
+                <label>Grade</label>
+                <input type="text" @bind="formGrade" placeholder="e.g. 10" />
+            </div>
+
+            @if (!string.IsNullOrEmpty(formError))
+            {
+                <p class="error-msg">⚠️ @formError</p>
+            }
+
+            <div class="modal-actions">
+                <button class="btn-cancel" @onclick="CloseModal" disabled="@isSaving">Cancel</button>
+                <button class="btn-save"   @onclick="SaveStudent" disabled="@isSaving">
+                    @(isSaving ? "Saving…" : isEditing ? "Save Changes" : "Add Student")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+
+    // ══════════════════════════════════════════════════════════
+    //  SIMULATED SESSION — change Name + Grade to switch users.
+    //  The matching row is fetched from Supabase on load.
+    //  If that row's Grade == "Admin" → admin view.
+    //  Any other grade               → student schedule view.
+    // ══════════════════════════════════════════════════════════
+    const string currentStudentName  = "";   // ← set to the logged-in user's name
+    const string currentStudentGrade = "";         // ← set to the logged-in user's grade
+
+    // ── Supabase config ──────────────────────────────────────
+    const string SupabaseUrl = "https://njtfakaledathlsreizf.supabase.co";
+    const string SupabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qdGZha2FsZWRhdGhsc3JlaXpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2MzQyNTUsImV4cCI6MjA5MDIxMDI1NX0.vi2EvSNzZ-5tS7-eUeJJTsQVdXEnnfYo3iRee6a77pY";
+    const string Table       = "Users";
+
+    // ── Data model ────────────────────────────────────────────
+    class DbStudent
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("id")]
+        public int Id { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("Name")]
+        public string Name { get; set; } = "";
+
+        [System.Text.Json.Serialization.JsonPropertyName("Grade")]
+        public string Grade { get; set; } = "";
+
+        [System.Text.Json.Serialization.JsonPropertyName("Email")]
+        public string Email { get; set; } = "";
+
+        [System.Text.Json.Serialization.JsonPropertyName("Password")]
+        public string Password { get; set; } = "";
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public List<ScheduleItem> Schedule { get; set; } = new();
+    }
+
+    class ScheduleItem
+    {
+        public int    Period      { get; set; }
+        public string ClassName   { get; set; } = "";
+        public string TeacherName { get; set; } = "";
+    }
+
+    // ── State ─────────────────────────────────────────────────
+    bool      isLoading          = true;
+    bool      isFetchingStudents = false;
+    bool      isSaving           = false;
+    bool      showSchedule       = false;
+    string    loadError          = "";
+    DbStudent? currentUser       = null;
+    DbStudent? selectedStudent   = null;
+    List<DbStudent> allStudents  = new();
+
+    bool IsAdmin => currentUser?.Grade == "Admin";
+
+    // Modal state
+    bool   showModal  = false;
+    bool   isEditing  = false;
+    int    editingId  = 0;
+    string formName     = "";
+    string formEmail    = "";
+    string formPassword = "";
+    string formGrade    = "";
+    string formError    = "";
+
+    // ── Lifecycle ─────────────────────────────────────────────
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Fetch the current user's row from Supabase by Name + Grade
+            var encodedName  = Uri.EscapeDataString(currentStudentName);
+            var encodedGrade = Uri.EscapeDataString(currentStudentGrade);
+            var url = $"{SupabaseUrl}/rest/v1/{Table}?Name=eq.{encodedName}&Grade=eq.{encodedGrade}&select=*&limit=1";
+
+            var req = MakeRequest(HttpMethod.Get, url);
+            var res = await Http.SendAsync(req);
+
+            if (res.IsSuccessStatusCode)
+            {
+                var list = await res.Content.ReadFromJsonAsync<List<DbStudent>>();
+                if (list is not null && list.Count > 0)
+                {
+                    currentUser = list[0];
+                    AttachLocalSchedule(currentUser);
+
+                    // Admin: also load the full student list
+                    if (IsAdmin)
+                        await FetchAllStudents();
+                }
+                else
+                {
+                    loadError = $"No user found with name \"{currentStudentName}\" and grade \"{currentStudentGrade}\".";
+                }
+            }
+            else
+            {
+                loadError = $"Supabase error: {res.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            loadError = $"Network error: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    // ── Supabase helpers ──────────────────────────────────────
+
+    System.Net.Http.HttpRequestMessage MakeRequest(
+        HttpMethod method, string url, object? body = null)
+    {
+        var req = new System.Net.Http.HttpRequestMessage(method, url);
+        req.Headers.Add("apikey", SupabaseKey);
+        req.Headers.Add("Authorization", $"Bearer {SupabaseKey}");
+
+        if (body is not null)
+        {
+            var json = System.Text.Json.JsonSerializer.Serialize(body);
+            req.Content = new System.Net.Http.StringContent(
+                json, System.Text.Encoding.UTF8, "application/json");
+        }
+        return req;
+    }
+
+    async Task FetchAllStudents()
+    {
+        isFetchingStudents = true;
+        try
+        {
+            var url = $"{SupabaseUrl}/rest/v1/{Table}?select=*&order=Name.asc";
+            var req = MakeRequest(HttpMethod.Get, url);
+            var res = await Http.SendAsync(req);
+
+            if (res.IsSuccessStatusCode)
+            {
+                var list = await res.Content.ReadFromJsonAsync<List<DbStudent>>();
+                if (list is not null)
+                {
+                    foreach (var s in list) AttachLocalSchedule(s);
+                    allStudents = list;
+                }
+            }
+        }
+        finally
+        {
+            isFetchingStudents = false;
+        }
+    }
+
+    // ── Modal helpers ─────────────────────────────────────────
+
+    void OpenAddModal()
+    {
+        isEditing = false; editingId = 0;
+        formName = ""; formEmail = "";
+        formPassword = ""; formGrade = "";
+        formError = ""; showModal = true;
+    }
+
+    void OpenEditModal(DbStudent s)
+    {
+        isEditing = true; editingId = s.Id;
+        formName     = s.Name;
+        formEmail    = s.Email;
+        formPassword = s.Password;
+        formGrade    = s.Grade;
+        formError    = ""; showModal = true;
+    }
+
+    void CloseModal() { showModal = false; formError = ""; }
+
+    async Task SaveStudent()
+    {
+        if (string.IsNullOrWhiteSpace(formName))     { formError = "Name is required.";     return; }
+        if (string.IsNullOrWhiteSpace(formEmail))    { formError = "Email is required.";    return; }
+        if (string.IsNullOrWhiteSpace(formPassword)) { formError = "Password is required."; return; }
+        if (string.IsNullOrWhiteSpace(formGrade))    { formError = "Grade is required.";    return; }
+
+        isSaving = true; formError = "";
+
+        try
+        {
+            var payload = new
+            {
+                Name     = formName.Trim(),
+                Email    = formEmail.Trim(),
+                Password = formPassword,
+                Grade    = formGrade.Trim()
+            };
+
+            System.Net.Http.HttpRequestMessage req;
+            System.Net.Http.HttpResponseMessage res;
+
+            if (isEditing)
+            {
+                // Edit still uses the internal id for the PATCH target (precise + safe)
+                var url = $"{SupabaseUrl}/rest/v1/{Table}?id=eq.{editingId}";
+                req = MakeRequest(HttpMethod.Patch, url, payload);
+                req.Headers.Add("Prefer", "return=representation");
+                res = await Http.SendAsync(req);
+            }
+            else
+            {
+                var url = $"{SupabaseUrl}/rest/v1/{Table}";
+                req = MakeRequest(HttpMethod.Post, url, payload);
+                req.Headers.Add("Prefer", "return=representation");
+                res = await Http.SendAsync(req);
+            }
+
+            if (!res.IsSuccessStatusCode)
+            {
+                var body = await res.Content.ReadAsStringAsync();
+                formError = $"Save failed ({res.StatusCode}): {body}";
+                return;
+            }
+
+            CloseModal();
+            await FetchAllStudents();
+        }
+        catch
+        {
+            formError = "A network error occurred. Please try again.";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    // ── Navigation ────────────────────────────────────────────
+
+    void AdminViewSchedule(DbStudent s) { selectedStudent = s; showSchedule = true; }
+
+    void GoBack() { showSchedule = false; selectedStudent = null; }
+
+    void Logout()
+    {
+        showSchedule = false; selectedStudent = null;
+        NavigationManager.NavigateTo("/");
+    }
+
+    // ── Schedule render fragment ──────────────────────────────
+
+    RenderFragment RenderSchedule(DbStudent s) => __builder =>
+    {
+        if (s.Schedule.Count == 0)
+        {
+            <p style="color:#6b7280;font-size:0.9rem;">No schedule on file for this student.</p>
+        }
+        else
+        {
+            <table class="ss-table schedule-table">
+                <thead><tr><th>Period</th><th>Class</th><th>Teacher</th></tr></thead>
+                <tbody>
+                    @foreach (var item in s.Schedule)
+                    {
+                        <tr>
+                            <td><span class="period-num">@item.Period</span></td>
+                            <td>@item.ClassName</td>
+                            <td>@item.TeacherName</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    };
+
+    // ── Local sample schedules keyed by Name + Grade ──────────
+    // Replace once you add a schedules table to Supabase.
+
+    void AttachLocalSchedule(DbStudent s)
+    {
+        s.Schedule = (s.Name, s.Grade) switch
+        {
+            ("Jane Doe", "10") => new()
+            {
+                new() { Period=1, ClassName="Algebra II",         TeacherName="Mr. Carter"   },
+                new() { Period=2, ClassName="English Lit",        TeacherName="Ms. Rivera"   },
+                new() { Period=3, ClassName="World History",      TeacherName="Mr. Thompson" },
+                new() { Period=4, ClassName="Biology",            TeacherName="Dr. Patel"    },
+                new() { Period=5, ClassName="Lunch / Study Hall", TeacherName="—"            },
+                new() { Period=6, ClassName="Spanish II",         TeacherName="Señora Gomez" },
+                new() { Period=7, ClassName="Physical Education", TeacherName="Coach Davis"  },
+                new() { Period=8, ClassName="Art Studio",         TeacherName="Ms. Chen"     },
+                new() { Period=9, ClassName="Computer Science",   TeacherName="Mr. Nguyen"   },
+            },
+            ("John Smith", "11") => new()
+            {
+                new() { Period=1, ClassName="Pre-Calculus",       TeacherName="Ms. Huang"   },
+                new() { Period=2, ClassName="AP English Lang",    TeacherName="Mr. Wallace" },
+                new() { Period=3, ClassName="US History",         TeacherName="Mr. O'Brien" },
+                new() { Period=4, ClassName="Chemistry",          TeacherName="Dr. Kim"     },
+                new() { Period=5, ClassName="Lunch / Study Hall", TeacherName="—"           },
+                new() { Period=6, ClassName="French III",         TeacherName="Mme. Dubois" },
+                new() { Period=7, ClassName="Orchestra",          TeacherName="Mr. Russo"   },
+                new() { Period=8, ClassName="Photography",        TeacherName="Ms. Alvarez" },
+                new() { Period=9, ClassName="AP Psychology",      TeacherName="Dr. Freeman" },
+            },
+            ("Emily Clark", "9") => new()
+            {
+                new() { Period=1, ClassName="Geometry",              TeacherName="Ms. Brooks"   },
+                new() { Period=2, ClassName="English 9",             TeacherName="Mr. Jensen"   },
+                new() { Period=3, ClassName="Ancient Civilizations", TeacherName="Ms. Grant"    },
+                new() { Period=4, ClassName="Earth Science",         TeacherName="Mr. Flores"   },
+                new() { Period=5, ClassName="Lunch / Study Hall",    TeacherName="—"            },
+                new() { Period=6, ClassName="Spanish I",             TeacherName="Señor Medina" },
+                new() { Period=7, ClassName="Physical Education",    TeacherName="Coach Davis"  },
+                new() { Period=8, ClassName="Drama",                 TeacherName="Ms. Park"     },
+                new() { Period=9, ClassName="Health",                TeacherName="Mr. Turner"   },
+            },
+            ("Michael Lee", "12") => new()
+            {
+                new() { Period=1, ClassName="AP Calculus BC",       TeacherName="Dr. Singh"  },
+                new() { Period=2, ClassName="AP Literature",        TeacherName="Ms. Evans"  },
+                new() { Period=3, ClassName="AP US Gov & Politics", TeacherName="Mr. Hardy"  },
+                new() { Period=4, ClassName="AP Physics C",         TeacherName="Dr. Okafor" },
+                new() { Period=5, ClassName="Lunch / Study Hall",   TeacherName="—"          },
+                new() { Period=6, ClassName="Mandarin IV",          TeacherName="Ms. Zhou"   },
+                new() { Period=7, ClassName="Robotics Club",        TeacherName="Mr. Nguyen" },
+                new() { Period=8, ClassName="Senior Seminar",       TeacherName="Ms. Rivera" },
+                new() { Period=9, ClassName="AP Statistics",        TeacherName="Mr. Carter" },
+            },
+            _ => new()  // no schedule on file
+        };
+    }
+}
+

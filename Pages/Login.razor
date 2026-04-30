@@ -1,0 +1,86 @@
+@page "/"
+@layout LoginLayout
+@inject SupabaseService SupabaseService
+@inject NavigationManager Nav
+
+<div class="login-container">
+    <div class="login-card">
+
+        <!-- Left side -->
+        <div class="login-left">
+            <img src="faith.png" alt="School Logo" class="logo" />
+            <h2>Faith Christian School</h2>
+            <p>"Romans 10:17"</p>
+            <span class="subtitle">Course Selection Guide</span>
+        </div>
+
+        <!-- Right side -->
+        <div class="login-right">
+            <h3>Welcome Back</h3>
+
+            <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-group">
+                    <label>Email</label>
+                    <InputText class="form-control" @bind-Value="loginModel.Email" />
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <InputText type="password" class="form-control" @bind-Value="loginModel.Password" />
+                </div>
+
+                <button class="btn-login" type="submit">Sign In</button>
+
+                @if (!string.IsNullOrEmpty(message))
+                {
+                    <p class="text-danger">@message</p>
+                }
+            </EditForm>
+        </div>
+
+    </div>
+</div>
+
+@code {
+    private LoginModel loginModel = new();
+    private string message = "";
+
+    private async Task HandleLogin()
+    {
+        message = ""; // reset message
+
+        if (SupabaseService == null)
+        {
+            message = "Service not available.";
+            return;
+        }
+
+        try
+        {
+            var success = await SupabaseService.Login(loginModel.Email, loginModel.Password);
+
+            if (success)
+            {
+                Nav.NavigateTo("/School");
+            }
+            else
+            {
+                message = "Invalid login.";
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"Error: {ex.Message}";
+            Console.WriteLine(ex.ToString());
+        }
+    }
+
+    public class LoginModel
+    {
+        public string Email { get; set; } = "";
+        public string Password { get; set; } = "";
+    }
+}

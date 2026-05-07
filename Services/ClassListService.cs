@@ -62,7 +62,12 @@ public class ClassListService
     // Enroll a student in a class
     public async Task<bool> EnrollStudentAsync(long studentId, long courseId)
     {
-        var body = JsonContent.Create(new { StudentID = studentId, CourseID = courseId });
+        var body = JsonContent.Create(
+            new StudentCourseInsert
+            {
+                StudentID = studentId,
+                CourseID = courseId
+            });
         var response = await _http.PostAsync($"{BaseUrl}/StudentCourses", body);
         return response.IsSuccessStatusCode;
     }
@@ -98,6 +103,14 @@ public class ClassListService
     }
 }
 
+public class StudentCourseInsert
+{
+    [JsonPropertyName("StudentID")]
+    public long StudentID { get; set; }
+
+    [JsonPropertyName("CourseID")]
+    public long CourseID { get; set; }
+}
 // Wrapper to unwrap Supabase's nested join response
 public class StudentCourseRow
 {

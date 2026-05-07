@@ -1,0 +1,123 @@
+@page "/test"
+@inject UserSession UserSession
+@inject ClassListService ClassListService
+@inject NavigationManager Nav
+@using CourseSelectionGuide.Models
+
+<h2>DB Test Page</h2>
+
+@if (!UserSession.IsLoggedIn)
+{
+    <p style="color:red">Not logged in! <a href="/">Go to login</a></p>
+}
+else
+{
+    <p><strong>Logged in as:</strong> @UserSession.Name | Grade: @UserSession.Grade | ID: @UserSession.UserId</p>
+
+    <hr />
+
+    <h3>All Available Courses</h3>
+    @if (allCourses == null)
+    {
+        <p>Loading courses...</p>
+    }
+    else if (!allCourses.Any())
+    {
+        <p style="color:red">No courses returned — check RLS policies on Classes table.</p>
+    }
+    else
+    {
+        <table border="1" cellpadding="6">
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Credits</th>
+                <th>Type</th>
+                <th>Action</th>
+            </tr>
+            @foreach (var course in allCourses)
+            {
+                var isEnrolled = myCourses?.Any(c => c.Id == course.Id) ?? false;
+                <tr>
+                    <td>@course.Id</td>
+                    <td>@course.SubjectName</td>
+                    <td>@course.Credits</td>
+                    <td>@course.CreditType</td>
+                    <td>
+                        @if (isEnrolled)
+                        {
+                            <button @onclick="() => Unenroll(course.Id)">Unenroll</button>
+                        }
+                        else
+                        {
+                            <button @onclick="() => Enroll(course.Id)">Enroll</button>
+                        }
+                    </td>
+                </tr>
+            }
+        </table>
+    }
+
+    <hr />
+
+    <h3>My Enrolled Courses</h3>
+    @if (myCourses == null)
+    {
+        <p>Loading...</p>
+    }
+    else if (!myCourses.Any())
+    {
+        <p>No enrolled courses yet.</p>
+    }
+    else
+    {
+        <ul>
+            @foreach (var course in myCourses)
+            {
+                <li>@course.SubjectName (@course.Credits credits)</li>
+            }
+        </ul>
+    }
+
+    @if (!string.IsNullOrEmpty(statusMessage))
+    {
+        <p style="color:green"><strong>@statusMessage</strong></p>
+    }
+}
+
+@code {
+    private List<Course>? allCourses;
+    private List<Course>? myCourses;
+    private string statusMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!UserSession.IsLoggedIn)
+        {
+            Nav.NavigateTo("/");
+            return;
+        }
+
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        allCourses = await ClassListService.GetClassesAsync();
+        myCourses = await ClassListService.GetClassesForStudentAsync(UserSession.UserId);
+    }
+
+    private async Task Enroll(long courseId)
+    {
+        var success = await ClassListService.EnrollStudentAsync(UserSession.UserId, courseId);
+        statusMessage = success ? "Enrolled successfully!" : "Enroll failed — check Student Courses RLS.";
+        await LoadData();
+    }
+
+    private async Task Unenroll(long courseId)
+    {
+        var success = await ClassListService.UnenrollStudentAsync(UserSession.UserId, courseId);
+        statusMessage = success ? "Unenrolled successfully!" : "Unenroll failed — check Student Courses RLS.";
+        await LoadData();
+    }
+}

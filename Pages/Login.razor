@@ -2,6 +2,7 @@
 @layout LoginLayout
 @inject UserSession UserSession
 @inject SupabaseService SupabaseService
+@inject SessionStorageService Storage
 @inject NavigationManager Nav
 
 <div class="login-container">
@@ -57,6 +58,8 @@
             UserSession.UserId = user.Id;
             UserSession.Name = user.Name;
             UserSession.Grade = user.Grade;
+
+            await Storage.SaveAsync(UserSession);
             Nav.NavigateTo("/courselist");
         }
         else

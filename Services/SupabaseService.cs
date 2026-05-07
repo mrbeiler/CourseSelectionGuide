@@ -1,4 +1,8 @@
 using System.Net.Http;
+using System.Net.Http.Json;
+using System.Text.Json.Serialization;
+using CourseSelectionGuide.Models;
+using System.Text.Json;
 
 public class SupabaseService
 {
@@ -10,21 +14,25 @@ public class SupabaseService
     public SupabaseService(HttpClient http)
     {
         _http = http;
-        _http.DefaultRequestHeaders.Add("apikey", key);
-        _http.DefaultRequestHeaders.Add("Authorization", $"Bearer {key}");
     }
 
-   public async Task<bool> Login(string email, string password)
-{
-    var encodedEmail = Uri.EscapeDataString(email);
-    var encodedPassword = Uri.EscapeDataString(password);
+   public async Task<Users?> Login(string email, string password)
+    {
+        var encodedEmail = Uri.EscapeDataString(email);
+        var response = await _http.GetAsync(
+            $"{url}/rest/v1/Users?Email=eq.{encodedEmail}&select=*"
+        );
 
-    var response = await _http.GetAsync(
-        $"{url}/rest/v1/users?email=eq.{encodedEmail}&password=eq.{encodedPassword}"
-    );
+        if (!response.IsSuccessStatusCode)
+            return null;
 
-    var data = await response.Content.ReadAsStringAsync();
+        var json = await response.Content.ReadAsStringAsync();
+        var users = JsonSerializer.Deserialize<List<Users>>(json);
+        var user = users?.FirstOrDefault();
 
-    return data != "[]";
-}
+        if (user != null && user.Password == password)
+            return user;
+
+        return null;
+    }
 }

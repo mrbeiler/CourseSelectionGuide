@@ -1,0 +1,787 @@
+@page "/courseselection"
+
+@inject UserSession UserSession
+@inject ClassListService ClassListService
+@inject NavigationManager Nav
+
+@using System.Linq
+@using CourseSelectionGuide.Models
+
+<PageTitle>Course Selection</PageTitle>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Faith Mennonite High School — Course Selection</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --forest:  #2d4a32;
+  --forest2: #3d6645;
+  --gold:    #b5872a;
+  --gold-lt: #f5e4b8;
+  --cream:   #faf7f0;
+  --cream2:  #f0ebe0;
+  --cream3:  #e4dccb;
+  --ink:     #1e2820;
+  --ink2:    #3a4a3d;
+  --ink3:    #6a7a6d;
+  --red:     #8b2e2e;
+  --red-lt:  #faeaea;
+  --blue:    #2a4a7f;
+  --blue-lt: #e8eef8;
+  --shadow:  0 2px 10px rgba(30,40,32,.10);
+  --shadow2: 0 6px 24px rgba(30,40,32,.14);
+}
+
+html{scroll-behavior:smooth}
+body{
+  font-family:'Source Sans 3',sans-serif;
+  background:var(--cream);
+  color:var(--ink);
+  min-height:100vh;
+  font-size:15px;
+}
+
+/* ── HEADER ── */
+.header{
+  background:var(--forest);
+  padding:0 36px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  height:62px;
+  position:sticky;
+  top:0;
+  z-index:100;
+  box-shadow:0 2px 16px rgba(0,0,0,.25);
+}
+.header-brand{display:flex;align-items:center;gap:14px}
+.header-logo{
+  width:36px;height:36px;
+  background:var(--gold);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Lora',serif;font-weight:700;font-size:1rem;color:var(--forest);
+  flex-shrink:0;
+}
+.header-title{
+  font-family:'Lora',serif;font-size:1.05rem;font-weight:600;
+  color:#fff;line-height:1.2;
+}
+.header-sub{font-size:.7rem;color:rgba(255,255,255,.45);letter-spacing:.08em;text-transform:uppercase}
+.header-grade-select{
+  display:flex;align-items:center;gap:10px;
+  font-size:.78rem;color:rgba(255,255,255,.65);letter-spacing:.06em;text-transform:uppercase;
+}
+.grade-btn{
+  padding:5px 13px;border-radius:4px;border:1px solid rgba(255,255,255,.2);
+  background:transparent;color:rgba(255,255,255,.65);font-family:inherit;
+  font-size:.75rem;font-weight:500;cursor:pointer;transition:all .15s;
+  letter-spacing:.04em;
+}
+.grade-btn:hover{background:rgba(255,255,255,.1);color:#fff}
+.grade-btn.active{background:var(--gold);border-color:var(--gold);color:var(--forest);font-weight:600}
+
+/* ── LAYOUT ── */
+.shell{
+  display:grid;
+  grid-template-columns:1fr 350px;
+  min-height:calc(100vh - 62px);
+}
+
+/* ── LEFT ── */
+.left{
+  padding:28px 32px;
+  border-right:1px solid var(--cream3);
+  overflow-y:auto;
+  max-height:calc(100vh - 62px);
+}
+
+.section-heading{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:14px;
+}
+.section-heading h2{
+  font-family:'Lora',serif;font-size:1.1rem;font-weight:600;color:var(--ink);
+}
+.pill-count{
+  background:var(--forest);color:#fff;
+  font-size:.65rem;font-weight:600;padding:2px 7px;border-radius:10px;
+  letter-spacing:.03em;
+}
+
+.dept-tabs{
+  display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;
+}
+.dept-tab{
+  padding:4px 11px;border-radius:20px;border:1px solid var(--cream3);
+  background:#fff;color:var(--ink2);font-size:.72rem;font-weight:500;
+  cursor:pointer;transition:all .14s;letter-spacing:.02em;
+  font-family:inherit;
+}
+.dept-tab:hover{border-color:var(--forest2);color:var(--forest)}
+.dept-tab.active{background:var(--forest);border-color:var(--forest);color:#fff}
+
+/* Required section */
+.required-block{
+  background:linear-gradient(135deg,#fff 0%,#f8f5ec 100%);
+  border:1px solid var(--cream3);border-left:4px solid var(--gold);
+  border-radius:8px;padding:16px 18px;margin-bottom:18px;
+}
+.req-label{
+  font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:10px;
+}
+.req-chips{display:flex;flex-wrap:wrap;gap:6px}
+.req-chip{
+  background:var(--gold-lt);color:#7a5a10;
+  font-size:.72rem;font-weight:500;padding:4px 10px;border-radius:4px;
+  display:flex;align-items:center;gap:5px;
+}
+.req-chip .cr{opacity:.6;font-size:.65rem}
+
+/* Course cards */
+.course-card{
+  border:1px solid var(--cream3);border-radius:8px;
+  background:#fff;padding:13px 15px;margin-bottom:7px;
+  box-shadow:var(--shadow);transition:box-shadow .15s,transform .12s,border-color .15s;
+  cursor:pointer;position:relative;overflow:hidden;
+  animation:fadeUp .2s ease both;
+}
+.course-card:hover{box-shadow:var(--shadow2);transform:translateY(-1px);border-color:var(--forest2)}
+.course-card.selected{border-color:var(--forest);background:linear-gradient(135deg,#fff,#f0f6f1)}
+.course-card.conflict-hint { border-color: var(--red); background: var(--red-lt); }
+.course-card .left-bar{
+  position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--cream3);transition:background .15s;border-radius:8px 0 0 8px;
+}
+.course-card.selected .left-bar{background:var(--forest)}
+
+@@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+.card-row{display:flex;align-items:flex-start;gap:11px;padding-left:6px}
+.card-check{
+  width:17px;height:17px;border:2px solid var(--cream3);border-radius:4px;
+  flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;
+  transition:all .14s;background:#fff;
+}
+.course-card.selected .card-check{background:var(--forest);border-color:var(--forest)}
+.card-check svg{opacity:0;transition:opacity .1s}
+.course-card.selected .card-check svg{opacity:1}
+
+.card-info{flex:1}
+.card-name{
+  font-family:'Lora',serif;font-size:.95rem;font-weight:600;line-height:1.3;
+  color:var(--ink);margin-bottom:5px;
+}
+.card-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:5px}
+.tag{
+  font-size:.64rem;font-weight:600;padding:2px 7px;border-radius:3px;
+  letter-spacing:.03em;display:inline-flex;align-items:center;gap:3px;
+}
+.tag-dept{background:var(--cream2);color:var(--ink3)}
+.tag-credits{background:var(--blue-lt);color:var(--blue)}
+.tag-grade{background:#eef5ee;color:var(--forest2)}
+.tag-prereq{background:#fff5e0;color:#8a6000}
+.tag-math{background:#ede8f5;color:#5a3a9a}
+.tag-science{background:#e5f3ee;color:#1a6a4a}
+.card-desc{
+  font-size:.78rem;color:var(--ink3);line-height:1.5;
+  max-height:0;overflow:hidden;transition:max-height .25s ease,margin-top .2s;
+}
+.course-card.expanded .card-desc{max-height:200px;margin-top:6px}
+.expand-btn{
+  font-size:.67rem;color:var(--forest2);font-weight:500;
+  background:none;border:none;cursor:pointer;padding:0;font-family:inherit;
+  margin-top:3px;text-decoration:underline;text-underline-offset:2px;
+}
+
+/* Search */
+.search-wrap{position:relative;margin-bottom:14px}
+.search-input{
+  width:100%;padding:8px 12px 8px 34px;border:1px solid var(--cream3);border-radius:6px;
+  font-family:inherit;font-size:.85rem;color:var(--ink);background:#fff;
+  outline:none;transition:border-color .14s;
+}
+.search-input:focus{border-color:var(--forest2)}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:.35;font-size:.9rem}
+
+.divider{height:1px;background:var(--cream3);margin:20px 0}
+
+/* ── RIGHT SIDEBAR ── */
+.right{
+  background:var(--forest);color:#fff;
+  display:flex;flex-direction:column;
+  padding:24px 22px;
+  position:sticky;top:62px;
+  height:calc(100vh - 62px);
+  overflow-y:auto;
+}
+
+.sidebar-section{margin-bottom:22px}
+.sidebar-label{
+  font-size:.63rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:rgba(255,255,255,.38);margin-bottom:10px;
+}
+
+/* Credit dial area */
+.credit-display{
+  background:rgba(0,0,0,.2);border-radius:10px;padding:16px;
+  margin-bottom:6px;
+}
+.credit-main-row{display:flex;align-items:flex-end;gap:6px;margin-bottom:10px}
+.credit-big{
+  font-family:'Lora',serif;font-size:2.8rem;font-weight:700;line-height:1;
+  color:#fff;
+}
+.credit-denom{font-size:.85rem;color:rgba(255,255,255,.4);padding-bottom:6px}
+.credit-bar-track{
+  height:5px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden;margin-bottom:8px;
+}
+.credit-bar-fill{height:100%;border-radius:3px;background:var(--gold);transition:width .3s cubic-bezier(.4,0,.2,1)}
+.credit-bar-fill.warn{background:#e07020}
+.credit-bar-fill.ok{background:#4caf7d}
+.credit-rows{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.credit-stat{
+  background:rgba(255,255,255,.06);border-radius:6px;padding:7px 9px;
+}
+.credit-stat-val{font-size:.85rem;font-weight:600;color:#fff}
+.credit-stat-key{font-size:.6rem;color:rgba(255,255,255,.35);margin-top:1px}
+
+/* Study hall badge */
+.study-hall-badge{
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(181,135,42,.15);border:1px solid rgba(181,135,42,.3);
+  border-radius:6px;padding:8px 11px;margin-top:6px;
+}
+.sh-label{font-size:.7rem;color:rgba(255,255,255,.55)}
+.sh-val{font-size:1rem;font-weight:600;color:var(--gold-lt)}
+
+/* Req progress */
+.req-progress{margin-bottom:0}
+.req-row{
+  display:flex;align-items:center;gap:8px;padding:6px 0;
+  border-bottom:1px solid rgba(255,255,255,.06);font-size:.77rem;
+}
+.req-row:last-child{border-bottom:none}
+.req-dot{
+  width:8px;height:8px;border-radius:50%;flex-shrink:0;
+  background:rgba(255,255,255,.15);transition:background .2s;
+}
+.req-dot.met{background:#4caf7d}
+.req-dot.partial{background:#e07020}
+.req-row-label{flex:1;color:rgba(255,255,255,.65)}
+.req-row-val{font-size:.7rem;color:rgba(255,255,255,.4)}
+
+/* Error */
+.error-box{
+  background:var(--red);border-radius:7px;padding:9px 12px;
+  font-size:.77rem;font-weight:500;margin-bottom:12px;
+  display:none;animation:slideIn .2s ease;
+}
+.error-box.show{display:block}
+@@keyframes slideIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
+
+/* Pref list */
+.pref-list{flex:1;overflow-y:auto;min-height:0}
+.pref-item{
+  display:flex;align-items:center;gap:8px;
+  padding:9px 11px;border-radius:7px;margin-bottom:5px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.07);
+  transition:background .13s;
+}
+.pref-item:hover{background:rgba(255,255,255,.1)}
+.pref-num{
+  font-family:'Lora',serif;font-size:.78rem;color:rgba(255,255,255,.28);
+  width:16px;text-align:center;flex-shrink:0;
+}
+.pref-name{flex:1;font-size:.82rem;line-height:1.3}
+.pref-cr{font-size:.65rem;color:rgba(255,255,255,.35);flex-shrink:0}
+.pref-req-tag{
+  font-size:.58rem;font-weight:600;padding:1px 5px;border-radius:2px;
+  background:rgba(181,135,42,.25);color:var(--gold-lt);letter-spacing:.04em;
+}
+.move-btns{display:flex;flex-direction:column;gap:2px}
+.mbtn{
+  width:18px;height:18px;border-radius:3px;border:none;
+  background:rgba(255,255,255,.08);color:rgba(255,255,255,.4);
+  cursor:pointer;font-size:.6rem;display:flex;align-items:center;justify-content:center;
+  transition:all .1s;
+}
+.mbtn:hover{background:rgba(255,255,255,.18);color:#fff}
+.mbtn:disabled{opacity:.15;pointer-events:none}
+
+.empty-pref{
+  text-align:center;padding:24px 0;opacity:.25;
+  font-style:italic;font-size:.83rem;
+}
+
+/* Submit */
+.submit-btn{
+  margin-top:14px;width:100%;
+  background:var(--gold);color:var(--forest);
+  border:none;border-radius:7px;padding:12px;
+  font-family:inherit;font-size:.82rem;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;cursor:pointer;
+  transition:background .14s,transform .1s;
+}
+.submit-btn:hover{background:#c99a38;transform:translateY(-1px)}
+.submit-btn:active{transform:none}
+
+/* Math/Science note */
+.ms-note{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  border-radius:6px;padding:9px 11px;font-size:.7rem;color:rgba(255,255,255,.5);
+  line-height:1.6;margin-top:4px;
+}
+.ms-note strong{color:rgba(255,255,255,.75)}
+
+/* Modal overlay for description */
+.tooltip-modal{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,.45);z-index:200;
+  display:none;align-items:center;justify-content:center;
+  padding:24px;animation:fadeIn .15s ease;
+}
+.tooltip-modal.open{display:flex}
+@@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-box{
+  background:#fff;border-radius:12px;max-width:520px;width:100%;
+  box-shadow:0 20px 60px rgba(0,0,0,.3);
+  animation:scaleIn .15s cubic-bezier(.34,1.56,.64,1);
+}
+@@keyframes scaleIn{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-header{
+  background:var(--forest);border-radius:12px 12px 0 0;
+  padding:18px 20px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
+}
+.modal-title{font-family:'Lora',serif;font-size:1.1rem;font-weight:600;color:#fff}
+.modal-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.modal-close{
+  background:rgba(255,255,255,.15);border:none;color:#fff;
+  width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:1rem;
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  transition:background .12s;
+}
+.modal-close:hover{background:rgba(255,255,255,.3)}
+.modal-body{padding:18px 20px}
+.modal-desc{font-size:.9rem;line-height:1.7;color:var(--ink2)}
+.modal-actions{
+  padding:14px 20px;border-top:1px solid var(--cream3);
+  display:flex;gap:10px;justify-content:flex-end;
+}
+.modal-add-btn{
+  padding:8px 20px;border-radius:6px;border:none;cursor:pointer;
+  font-family:inherit;font-size:.82rem;font-weight:600;letter-spacing:.03em;
+  transition:all .13s;
+}
+.modal-add-btn.add{background:var(--forest);color:#fff}
+.modal-add-btn.add:hover{background:var(--forest2)}
+.modal-add-btn.remove{background:var(--red-lt);color:var(--red)}
+.modal-add-btn.remove:hover{background:#f5d0d0}
+.modal-cancel{
+  padding:8px 16px;border-radius:6px;border:1px solid var(--cream3);
+  background:#fff;color:var(--ink2);cursor:pointer;font-family:inherit;font-size:.82rem;
+  transition:all .12s;
+}
+.modal-cancel:hover{background:var(--cream2)}
+</style>
+</head>
+
+
+<!-- HEADER -->
+<header class="header">
+    <div class="header-brand">
+        <div class="header-logo">FM</div>
+        <div>
+            <div class="header-title">Faith Mennonite High School</div>
+            <div class="header-sub">Course Selection — 2025–26</div>
+        </div>
+    </div>
+
+    @if (!HasPredefinedGrade)
+    {
+        <div class="header-grade-select">
+            <span>Grade:</span>
+
+            @foreach (var g in new[] { 9, 10, 11, 12 })
+            {
+                <button class="grade-btn @(grade == g ? "active" : "")"
+                        @onclick="() => SetGrade(g)">
+                    @g
+                </button>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="header-grade-select">
+            <span style="opacity:0.7">Selecting for Grade: <strong>@grade</strong></span>
+        </div>
+    }
+</header>
+
+<div class="shell">
+
+    <!-- LEFT -->
+    <div class="left">
+
+        <!-- REQUIRED -->
+        <div class="section-heading">
+            <h2>Required Courses</h2>
+            <span class="pill-count">@RequiredCourses.Count()</span>
+        </div>
+
+        <div class="required-block">
+            <div class="req-label">✦ Automatically included for Grade @grade</div>
+
+            <div class="req-chips">
+                @foreach (var c in RequiredCourses)
+                {
+                    <div class="req-chip" @onclick="() => OpenModal(c)">
+                        @c.Name <span class="cr">@c.Credits cr</span>
+                    </div>
+                }
+            </div>
+
+            @if (grade == 9)
+            {
+                <div style="margin-top:12px;padding:12px;background:var(--cream2);border-radius:6px;border:1px solid var(--cream3)">
+                    <div class="req-label">♪ Music Placement — Choose One</div>
+
+                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                        @foreach (var mc in MusicOptions)
+                        {
+                            <div class="course-card @(musicChoice?.Id == mc.Id ? "selected" : "")"
+                                 style="flex:1;min-width:140px;cursor:pointer"
+                                 @onclick="() => ToggleMusic(mc)">
+                                <div class="card-name">@mc.Name</div>
+                                <div class="card-desc" style="max-height:none">
+                                    @(mc.Name.Contains("Theory") ? "Advanced music theory track" : "Standard music reading track")
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- SEARCH -->
+        <input class="search-input" placeholder="Search courses..."
+               @bind="search" @bind:event="oninput" />
+
+        <!-- ELECTIVES -->
+        <div class="section-heading" style="margin-top:14px">
+            <h2>Elective Courses</h2>
+            <span class="pill-count">@FilteredElectives.Count()</span>
+        </div>
+
+        @foreach (var c in FilteredElectives)
+        {
+            <div class="course-card @(IsSelected(c) ? "selected" : "")"
+                 @onclick="() => ToggleCourse(c)">
+
+                <div class="card-row">
+                    <div class="card-check"></div>
+
+                    <div class="card-info">
+                        <div class="card-name">@c.Name</div>
+
+                        <div class="card-tags">
+                            <span class="tag tag-credits">@c.Credits cr</span>
+                            <span class="tag tag-dept">@c.Department</span>
+
+                            @if (!string.IsNullOrEmpty(c.Prerequisite))
+                            {
+                                <span class="tag tag-prereq">Prereq: @c.Prerequisite</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <div class="right">
+
+        <div class="sidebar-section">
+            <div class="sidebar-label">Credit Summary</div>
+
+            <div class="credit-display">
+                <div class="credit-big">@TotalCredits.ToString("0.##")</div>
+                <div class="credit-denom">/ 8.25 credits</div>
+
+                <div class="credit-bar-track">
+                    <div class="credit-bar-fill"
+                         style="width:@CreditPercent%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="sidebar-label">My Courses</div>
+
+            <div class="pref-list">
+                @if (RequiredCourses.Any())
+                {
+                    <div style="font-size:0.65rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin:8px 0 6px 0;">✦ Required</div>
+                    @foreach (var c in RequiredCourses)
+                    {
+                        <div class="pref-item">
+                            <div class="pref-name">@c.Name</div>
+                            <div class="pref-cr">@c.Credits</div>
+                        </div>
+                    }
+                }
+
+                @if (musicChoice != null)
+                {
+                    <div style="font-size:0.65rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin:8px 0 6px 0;">♪ Music</div>
+                    <div class="pref-item">
+                        <div class="pref-name">@musicChoice.Name</div>
+                        <div class="pref-cr">@musicChoice.Credits</div>
+                    </div>
+                }
+
+                @{
+                    var electivesOnly = selected.Where(c => !c.IsRequired).ToList();
+                }
+                @if (electivesOnly.Any())
+                {
+                    <div style="font-size:0.65rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin:8px 0 6px 0;">⊕ Electives</div>
+                    @foreach (var c in electivesOnly)
+                    {
+                        <div class="pref-item">
+                            <div class="pref-name">@c.Name</div>
+                            <div class="pref-cr">@c.Credits</div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(statusMessage))
+        {
+            <div style="padding:10px;margin-bottom:10px;border-radius:6px;font-size:0.85rem;background:@(isError ? "var(--red-lt)" : "#e8f5e9");color:@(isError ? "var(--red)" : "#2e7d32")">
+                @statusMessage
+            </div>
+        }
+
+        <button class="submit-btn" @onclick="Submit" disabled="@isSubmitting">
+            @(isSubmitting ? "Submitting..." : "Submit Selection →")
+        </button>
+    </div>
+</div>
+</html>
+
+@code {
+
+    // ---------------- STATE ----------------
+    private int grade = 9;
+    private string search = "";
+    private string statusMessage = "";
+    private bool isError = false;
+    private bool isSubmitting = false;
+
+    private List<Course> allCourses = new();
+    private List<Course> selected = new();
+    private Course? musicChoice;
+
+    private bool HasPredefinedGrade => !string.IsNullOrWhiteSpace(UserSession.Grade);
+
+    // ---------------- LOAD ----------------
+    protected override async Task OnInitializedAsync()
+    {
+        allCourses = await ClassListService.GetClassesAsync();
+
+        // If user has a grade in session, set to next year's grade (current + 1)
+        if (HasPredefinedGrade && int.TryParse(UserSession.Grade, out int currentGrade))
+        {
+            int nextGrade = currentGrade + 1;
+            if (nextGrade <= 12)
+            {
+                SetGrade(nextGrade);
+            }
+            else
+            {
+                SetGrade(12); // Cap at grade 12
+            }
+        }
+        else
+        {
+            SetGrade(9); // Default to grade 9 if no session grade
+        }
+
+        // Load existing enrollments if user is logged in
+        if (UserSession.IsLoggedIn)
+        {
+            try
+            {
+                var enrolledCourses = await ClassListService.GetClassesForStudentAsync(UserSession.UserId);
+
+                // Separate enrolled courses into required, music, and electives
+                foreach (var enrolledCourse in enrolledCourses)
+                {
+                    // Find the matching course from allCourses to maintain reference equality
+                    var course = allCourses.FirstOrDefault(c => c.Id == enrolledCourse.Id);
+                    if (course == null)
+                        continue;
+
+                    // Skip required courses as they're auto-added
+                    if (course.IsRequired)
+                        continue;
+
+                    // Check if it's a music course
+                    if (course.MusicChoice)
+                    {
+                        musicChoice = course;
+                    }
+                    else
+                    {
+                        // Add to selected electives
+                        if (!selected.Any(c => c.Id == course.Id))
+                        {
+                            selected.Add(course);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Silently fail - user just starts with empty selection
+                Console.WriteLine($"Failed to load existing enrollments: {ex.Message}");
+            }
+        }
+    }
+
+    // ---------------- DERIVED ----------------
+    private IEnumerable<Course> RequiredCourses =>
+        allCourses.Where(c => c.IsRequired && c.GradeMin <= grade && c.GradeMax >= grade);
+
+    private IEnumerable<Course> Electives =>
+        allCourses.Where(c =>
+            !c.IsRequired &&
+            c.GradeMin <= grade &&
+            c.GradeMax >= grade);
+
+    private IEnumerable<Course> FilteredElectives =>
+        Electives.Where(c =>
+            string.IsNullOrWhiteSpace(search) ||
+            c.Name.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+            c.Department.Contains(search, StringComparison.OrdinalIgnoreCase));
+
+    private IEnumerable<Course> SelectedCourses =>
+        selected.Concat(musicChoice != null ? new[] { musicChoice } : Enumerable.Empty<Course>());
+
+    private decimal TotalCredits =>
+        SelectedCourses.Sum(c => (decimal)c.Credits);
+
+    private int CreditPercent =>
+        (int)Math.Min(100, (TotalCredits / 8.25m) * 100);
+
+    private IEnumerable<Course> MusicOptions =>
+        allCourses.Where(c => c.MusicChoice && c.GradeMin <= grade && c.GradeMax >= grade);
+
+    // ---------------- ACTIONS ----------------
+    private void SetGrade(int g)
+    {
+        grade = g;
+        selected = RequiredCourses.ToList();
+        musicChoice = null;
+        search = "";
+    }
+
+    private void ToggleCourse(Course c)
+    {
+        if (c.IsRequired) return;
+
+        var existing = selected.FirstOrDefault(s => s.Id == c.Id);
+        if (existing != null)
+            selected.Remove(existing);
+        else
+            selected.Add(c);
+    }
+
+    private void ToggleMusic(Course c)
+    {
+        musicChoice = (musicChoice != null && musicChoice.Id == c.Id) ? null : c;
+    }
+
+    private bool IsSelected(Course c) =>
+        selected.Any(s => s.Id == c.Id) || (musicChoice != null && musicChoice.Id == c.Id);
+
+    private void OpenModal(Course c)
+    {
+        // placeholder for your existing modal system
+    }
+
+    private async Task Submit()
+    {
+        if (!UserSession.IsLoggedIn)
+        {
+            statusMessage = "Error: You must be logged in to submit courses.";
+            isError = true;
+            return;
+        }
+
+        if (!SelectedCourses.Any())
+        {
+            statusMessage = "Please select at least one course before submitting.";
+            isError = true;
+            return;
+        }
+
+        isSubmitting = true;
+        statusMessage = "";
+        isError = false;
+
+        try
+        {
+            // First, clear any existing enrollments for this student
+            var existingCourses = await ClassListService.GetClassesForStudentAsync(UserSession.UserId);
+            foreach (var course in existingCourses)
+            {
+                await ClassListService.UnenrollStudentAsync(UserSession.UserId, course.Id);
+            }
+
+            // Enroll in all selected courses
+            int successCount = 0;
+            foreach (var course in SelectedCourses)
+            {
+                bool success = await ClassListService.EnrollStudentAsync(UserSession.UserId, course.Id);
+                if (success)
+                {
+                    successCount++;
+                }
+            }
+
+            if (successCount == SelectedCourses.Count())
+            {
+                statusMessage = $"Successfully enrolled in {successCount} course{(successCount != 1 ? "s" : "")}!";
+                isError = false;
+            }
+            else
+            {
+                statusMessage = $"Enrolled in {successCount} of {SelectedCourses.Count()} courses. Some enrollments failed.";
+                isError = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Error submitting courses: {ex.Message}";
+            isError = true;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    }

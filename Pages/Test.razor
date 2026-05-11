@@ -40,7 +40,7 @@ else
                 var isEnrolled = myCourses?.Any(c => c.Id == course.Id) ?? false;
                 <tr>
                     <td>@course.Id</td>
-                    <td>@course.SubjectName</td>
+                    <td>@course.Name</td>
                     <td>@course.Credits</td>
                     <td>@course.CreditType</td>
                     <td>
@@ -74,7 +74,7 @@ else
         <ul>
             @foreach (var course in myCourses)
             {
-                <li>@course.SubjectName (@course.Credits credits)</li>
+                <li>@course.Name (@course.Credits credits)</li>
             }
         </ul>
     }

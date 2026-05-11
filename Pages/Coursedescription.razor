@@ -1,5 +1,6 @@
 @page "/courselist"
 @using CourseSelectionGuide.Models
+@using System.Xml
 @layout Header 
 
 <h3 class="mb-4">📚 Course Selection Guide</h3>
@@ -23,7 +24,7 @@
                         aria-expanded="false"
                         aria-controls="@collapseId">
 
-                    <span class="fw-semibold">@course.SubjectName</span>
+                    <span class="fw-semibold">@course.Name</span>
 
                     <span class="ms-auto d-flex align-items-center gap-2">
                         <span class="badge bg-primary rounded-pill">
@@ -47,7 +48,7 @@
                 <div class="accordion-body">
 
                     <p class="mb-3 text-muted fst-italic">
-                        @course.SubjectDescription
+                        @course.Description
                     </p>
 
                     <div class="row g-2">
@@ -78,8 +79,8 @@
         new Course
         {
             Id = 1,
-            SubjectName = "OT Survey",
-            SubjectDescription = "Old Testament survey is a survey of God's redemptive plan from the Garden of Eden to the return of the Babylonian Exiles. This survey emphasizes book content, character examples, and how God reveals himself and relates to His creation and people.",
+            Name = "OT Survey",
+            Description = "Old Testament survey is a survey of God's redemptive plan from the Garden of Eden to the return of the Babylonian Exiles. This survey emphasizes book content, character examples, and how God reveals himself and relates to His creation and people.",
             Credits = 1,
             Limitations = "10th grade only",
             CreditType = "Bible"
@@ -87,8 +88,8 @@
         new Course
         {
             Id = 2,
-            SubjectName = "Englsih 2",
-            SubjectDescription = "Sophomore English strengthens communication skills through grammar, vocabulary, literature, and writing. Grammar reviews freshman topics and adds concepts like mood and abstract nouns. Vocabulary focuses on word origins and analogies. Students analyze character, plot, and theme in works like Paradise Lost, Julius Caesar, and Don Quixote. Writing includes essays, poetry, a critical book review, and an Author Research Project, alongside public speaking.",
+            Name = "Englsih 2",
+            Description = "Sophomore English strengthens communication skills through grammar, vocabulary, literature, and writing. Grammar reviews freshman topics and adds concepts like mood and abstract nouns. Vocabulary focuses on word origins and analogies. Students analyze character, plot, and theme in works like Paradise Lost, Julius Caesar, and Don Quixote. Writing includes essays, poetry, a critical book review, and an Author Research Project, alongside public speaking.",
             Credits = 1,
             Limitations = "10th grade Only",
             CreditType = "English"
@@ -96,8 +97,8 @@
         new Course
         {
             Id = 3,
-            SubjectName = "World History",
-            SubjectDescription = "World History surveys early civilizations and nations to better understand the foundation of our present world. Units of study include early civilizations, regional civilizations, early modern times, Enlightenment and revolution, industrialism, globalization, the World Wars, and contemporary history. Writing, reading and vocabulary, critical thinking, and note-taking instruction provide students with the necessary skills for studying history, and students additionally gain an understanding of how the history of the Church is shaped by the growth of nations.",
+            Name = "World History",
+            Description = "World History surveys early civilizations and nations to better understand the foundation of our present world. Units of study include early civilizations, regional civilizations, early modern times, Enlightenment and revolution, industrialism, globalization, the World Wars, and contemporary history. Writing, reading and vocabulary, critical thinking, and note-taking instruction provide students with the necessary skills for studying history, and students additionally gain an understanding of how the history of the Church is shaped by the growth of nations.",
             Credits = 1,
             Limitations = "10th grade only",
             CreditType = "History"
@@ -105,8 +106,8 @@
         new Course
         {
             Id = 4,
-            SubjectName = "Biology",
-            SubjectDescription = "Biology touches on these major areas of study: cytology, botany, genetics, microbiology and zoology. There is a brief survey of the five-kingdom system of classification of life with a special emphasis on the animal kingdom. Many biology labs give the student a chance to have a hands-on approach to learning in these many areas of study.",
+            Name = "Biology",
+            Description = "Biology touches on these major areas of study: cytology, botany, genetics, microbiology and zoology. There is a brief survey of the five-kingdom system of classification of life with a special emphasis on the animal kingdom. Many biology labs give the student a chance to have a hands-on approach to learning in these many areas of study.",
             Credits = 1,
             Limitations = "10th grade only",
             CreditType = "Science"
@@ -114,8 +115,8 @@
         new Course
         {
             Id = 5,
-            SubjectName = "Physical Education",
-            SubjectDescription = "Physical exercise is important for all students. One of the goals for the class is to help students stay in good physical condition. Another goal is to teach students skills in playing various games such as soccer, basketball, softball, and volleyball. Students learn the rules of each game and are expected to display sportsmanship. Students should expect some in-class and some out-of-class assignments.",
+            Name = "Physical Education",
+            Description = "Physical exercise is important for all students. One of the goals for the class is to help students stay in good physical condition. Another goal is to teach students skills in playing various games such as soccer, basketball, softball, and volleyball. Students learn the rules of each game and are expected to display sportsmanship. Students should expect some in-class and some out-of-class assignments.",
             Credits = 0.5f,
             Limitations = "10th grade only",
             CreditType = "Physical Education"
@@ -123,8 +124,8 @@
         new Course
         {
             Id = 6,
-            SubjectName = "Geometry",
-            SubjectDescription = "Geometry is the study of lines and figures. Students should take it as a sophomore after they have completed Algebra I. The class begins by introducing key concepts and terminology and leads to logical reasoning through studying relations of geometry. Considerable time is spent with triangle congruencies.",
+            Name = "Geometry",
+            Description = "Geometry is the study of lines and figures. Students should take it as a sophomore after they have completed Algebra I. The class begins by introducing key concepts and terminology and leads to logical reasoning through studying relations of geometry. Considerable time is spent with triangle congruencies.",
             Credits = 1,
             Limitations = "10th grade only",
             CreditType = "Math"
@@ -132,8 +133,8 @@
         new Course
         {
             Id = 7,
-            SubjectName = "Large Chorus",
-            SubjectDescription = "Large chorus is the all-school chorus which performs at the Christmas Concert and Spring Concert. Students will practice weekly for the four-part a cappella concerts.",
+            Name = "Large Chorus",
+            Description = "Large chorus is the all-school chorus which performs at the Christmas Concert and Spring Concert. Students will practice weekly for the four-part a cappella concerts.",
             Credits = 0.5f,
             Limitations = "10th grade only",
             CreditType = "Music"
@@ -141,8 +142,8 @@
         new Course
         {
             Id = 8,
-            SubjectName = "Worldviews",
-            SubjectDescription = "This Bible course introduces six basic worldviews, including Christianity, and equips them to engage the world through the lens of Scripture. Students will learn how to love others and enjoy God’s world more intelligently, identify and engage the worldviews of our time, and appreciate how belief in Christ affects all aspects of life, in addition to developing critical thinking, research and communication skills. They will grow in their understanding of Scripture and in their ability to live out a consistent Christian worldview.",
+            Name = "Worldviews",
+            Description = "This Bible course introduces six basic worldviews, including Christianity, and equips them to engage the world through the lens of Scripture. Students will learn how to love others and enjoy God’s world more intelligently, identify and engage the worldviews of our time, and appreciate how belief in Christ affects all aspects of life, in addition to developing critical thinking, research and communication skills. They will grow in their understanding of Scripture and in their ability to live out a consistent Christian worldview.",
             Credits = 1,
             Limitations = "10th grade only",
             CreditType = "Bible"
@@ -150,8 +151,8 @@
         new Course
         {
             Id = 9,
-            SubjectName = "English 3",
-            SubjectDescription = "Junior English emphasizes logical and critical thinking through grammar, vocabulary, American literature, and writing. Students review grammar basics and refine sentence structure. Literature highlights satire, local color, and imagery in works by Twain, Poe, and others, including The Scarlet Letter. Writing includes essays, book reports, and research papers. Speaking opportunities include recitations, discussions, and presentations.",
+            Name = "English 3",
+            Description = "Junior English emphasizes logical and critical thinking through grammar, vocabulary, American literature, and writing. Students review grammar basics and refine sentence structure. Literature highlights satire, local color, and imagery in works by Twain, Poe, and others, including The Scarlet Letter. Writing includes essays, book reports, and research papers. Speaking opportunities include recitations, discussions, and presentations.",
             Credits = 1,
             Limitations = "11th grade only",
             CreditType = "English"
@@ -159,8 +160,8 @@
         new Course
         {
             Id = 10,
-            SubjectName = "Church History",
-            SubjectDescription = "This course surveys 21 centuries of Christianity with a specific concentration on the growth of the Anabaptist perspective. The course begins with a look at Acts and is followed by a study of the influence of early church fathers, Constantine, Augustine, the Crusades, powerful popes, and the Renaissance. The Reformation, pietism, missions, and deism are examined. Anabaptism’s rise and spread into Holland, Moravia, and finally the West are given attention. After a look at the growth of Anabaptism around the world in the 20 th and 21 st centuries, Anabaptism is compared with other Chrisitan disciplines.",
+            Name = "Church History",
+            Description = "This course surveys 21 centuries of Christianity with a specific concentration on the growth of the Anabaptist perspective. The course begins with a look at Acts and is followed by a study of the influence of early church fathers, Constantine, Augustine, the Crusades, powerful popes, and the Renaissance. The Reformation, pietism, missions, and deism are examined. Anabaptism’s rise and spread into Holland, Moravia, and finally the West are given attention. After a look at the growth of Anabaptism around the world in the 20 th and 21 st centuries, Anabaptism is compared with other Chrisitan disciplines.",
             Credits = 1,
             Limitations = "11th grade only",
             CreditType = "History"
@@ -168,10 +169,10 @@
         new Course
         {
             Id = 11,
-            SubjectName = "Large Chorus",
-            SubjectDescription = "Large chorus is the all-school chorus which performs at the Christmas Concert and Spring Concert. Student will practice weekly for the four-part a cappella concerts.",
+            Name = "Large Chorus",
+            Description = "Large chorus is the all-school chorus which performs at the Christmas Concert and Spring Concert. Student will practice weekly for the four-part a cappella concerts.",
             Credits = 0.25f,
-            Limitations = "11th grade only",
+            Limitations = "9th-11th grade only",
             CreditType = "Large chorus"
         },
         new Course
@@ -323,7 +324,7 @@
             SubjectName = "Advacned Excel",
             SubjectDescription = "This ¼ credit class continues the computer applications course by focusing on the advanced functions available in a spreadsheet program like lookup tables and complicated business formulas.",
             Credits = 0.25f,
-            Limitations = "1oth grade only",
+            Limitations = "10th grade only",
             CreditType = "Buisness"
         }, 
         new Course
@@ -441,7 +442,7 @@
             SubjectDescription = "Wood Shop Practicum is a further extension of Introduction to Wood Shop. Students will be expected to undertake more involved projects such as cabinets, desks etc. Topics such as cabinet construction, paneled door making, drawer making, and installation of hardware, veneering and use of Formica could be covered. (Students are expected to cover the cost of wood for personal projects.)",
             Credits = 0.5f,
             Limitations = "10th and 11th grade only",
-            CreditType = "INDUSTRIAL ARTS"
+            CreditType = "Industrial Arts "
         },
         new Course
         {
@@ -449,7 +450,7 @@
             SubjectName = "Introduction to Small Engines",
             SubjectDescription = "Students will be introduced to engine technology; they will learn the basic systems and parts identification.",
             Credits = 0.5f,
-            Limitations = "10th and 11th grade only",
+            Limitations = "10th-12th grade only",
             CreditType = "Industrial Arts"
         },
          new Course
@@ -494,7 +495,7 @@
             SubjectName = "Welding 1 & 2",
             SubjectDescription = "½ credit courses in welding. Welding 1 gives the student an introduction to the theory and the basic skills needed to weld using electric stick and oxyacetylene equipment. Welding 2 is an extension of these skills. This course is graded mainly on the welding skills demonstrated by the students. Welds include butt, fillet and lapp welds made in the flat, horizontal, and vertical positions. (Students are expected to cover the costs for personal projects.)",
             Credits = 0.5f,
-            Limitations = "10-12th grade only",
+            Limitations = "10th-12th grade only",
             CreditType = "Industrial Arts"
         }, 
         new Course
@@ -504,7 +505,7 @@
             SubjectDescription = "This course is designed to provide the student with a basic knowledge and understanding of physical fitness. In addition, the course will help the student assess his/her own fitness level. A large part of class time will be spent doing a variety of activities (stretches, running, weightlifting etc.) which will help the students attain a suitable level of fitness. (Offered on a limited basis)",
             Credits = 0.5f,
             Limitations = "11th and 12th grade only",
-            CreditType = "Physicla Education"
+            CreditType = "Physical Education"
         },
         new Course
         {
@@ -512,7 +513,7 @@
             SubjectName = "Basketball",
             SubjectDescription = "This course is designed to help the students excel at basketball. Emphasis will be placed on the fundamental skills, rules, and basic strategies of the game. Games with other schools will be scheduled and possibly a tournament.",
             Credits = 0.25f,
-            Limitations = "11th and 12th grade only",
+            Limitations = "9th-12th grade only",
             CreditType = "Physical Education"
         }, 
         new Course
@@ -521,7 +522,7 @@
             SubjectName = "Volleyball",
             SubjectDescription = "This course is designed to help the students excel at volleyball. Students will be taught advanced strategies and drilled on fundamental skills, rules and basic strategies of the game. Students are required to attend up to two practices a week outside of normal school hours. Games and tournaments with other schools will be scheduled.",
             Credits = 0.25f,
-            Limitations = "11th and 12th grade only",
+            Limitations = "9th-12th grade only",
             CreditType = "Physical Education"
         }, 
         new Course

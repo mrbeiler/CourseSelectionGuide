@@ -72,6 +72,79 @@ public class ClassListService
         return response.IsSuccessStatusCode;
     }
 
+    // Enroll a student in a class with preference
+    public async Task<bool> EnrollStudentWithPreferenceAsync(long studentId, long courseId, int? preference)
+    {
+        var jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = null
+        };
+
+        var data = new
+        {
+            StudentID = studentId,
+            CourseID = courseId,
+            Preference = preference
+        };
+
+        var jsonString = JsonSerializer.Serialize(data, jsonOptions);
+        var body = new StringContent(jsonString, System.Text.Encoding.UTF8, "application/json");
+
+        var response = await _http.PostAsync($"{BaseUrl}/StudentCourses", body);
+        return response.IsSuccessStatusCode;
+    }
+
+    // Update preference for a student's enrolled course
+    public async Task<bool> UpdateCoursePreferenceAsync(long studentId, long courseId, int? preference)
+    {
+        var jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = null
+        };
+
+        var data = new
+        {
+            Preference = preference
+        };
+
+        var jsonString = JsonSerializer.Serialize(data, jsonOptions);
+        var body = new StringContent(jsonString, System.Text.Encoding.UTF8, "application/json");
+
+        var request = new HttpRequestMessage(HttpMethod.Patch, 
+            $"{BaseUrl}/StudentCourses?StudentID=eq.{studentId}&CourseID=eq.{courseId}")
+        {
+            Content = body
+        };
+
+        var response = await _http.SendAsync(request);
+        return response.IsSuccessStatusCode;
+    }
+
+    // Get all enrollments for a student with preferences
+    public async Task<List<StudentCourseWithPreference>> GetStudentEnrollmentsWithPreferencesAsync(long studentId)
+    {
+        var response = await _http.GetAsync(
+            $"{BaseUrl}/StudentCourses?StudentID=eq.{studentId}&select=CourseID,Preference,Classes(*)"
+        );
+        response.EnsureSuccessStatusCode();
+
+        var json = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<List<StudentCourseWithPreference>>(json) ?? new();
+    }
+
+    // Batch update preferences for multiple courses
+    public async Task<bool> BatchUpdatePreferencesAsync(long studentId, Dictionary<long, int?> coursePreferences)
+    {
+        // Update each course preference individually
+        foreach (var kvp in coursePreferences)
+        {
+            var success = await UpdateCoursePreferenceAsync(studentId, kvp.Key, kvp.Value);
+            if (!success)
+                return false;
+        }
+        return true;
+    }
+
     // Update a class
     public async Task<bool> UpdateClassAsync(long id, Course updated)
     {
@@ -111,9 +184,23 @@ public class StudentCourseInsert
     [JsonPropertyName("CourseID")]
     public long CourseID { get; set; }
 }
+
 // Wrapper to unwrap Supabase's nested join response
 public class StudentCourseRow
 {
+    [JsonPropertyName("Classes")]
+    public Course Classes { get; set; } = new();
+}
+
+// Model for StudentCourses with preference
+public class StudentCourseWithPreference
+{
+    [JsonPropertyName("CourseID")]
+    public long CourseID { get; set; }
+
+    [JsonPropertyName("Preference")]
+    public int? Preference { get; set; }
+
     [JsonPropertyName("Classes")]
     public Course Classes { get; set; } = new();
 }

@@ -524,6 +524,11 @@ body{
                          style="width:@CreditPercent%"></div>
                 </div>
             </div>
+
+            <div class="study-hall-badge">
+                <span class="sh-label">Est. Study Halls (approx.)</span>
+                <span class="sh-val">@EstimatedStudyHalls.ToString("0.##")</span>
+            </div>
         </div>
 
         <div class="sidebar-section">
@@ -546,8 +551,9 @@ body{
                 {
                     <div style="font-size:0.65rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin:8px 0 6px 0;">♪ Music</div>
                     <div class="pref-item">
+                        <div class="pref-num">1</div>
                         <div class="pref-name">@musicChoice.Name</div>
-                        <div class="pref-cr">@musicChoice.Credits</div>
+                        <div class="pref-cr">@musicChoice.Credits cr</div>
                     </div>
                 }
 
@@ -557,11 +563,20 @@ body{
                 @if (electivesOnly.Any())
                 {
                     <div style="font-size:0.65rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin:8px 0 6px 0;">⊕ Electives</div>
-                    @foreach (var c in electivesOnly)
+                    @for (int i = 0; i < electivesOnly.Count; i++)
                     {
+                        var c = electivesOnly[i];
+                        var index = i;
+                        var preferenceNum = musicChoice != null ? i + 2 : i + 1;
+
                         <div class="pref-item">
+                            <div class="pref-num">@preferenceNum</div>
                             <div class="pref-name">@c.Name</div>
-                            <div class="pref-cr">@c.Credits</div>
+                            <div class="pref-cr">@c.Credits cr</div>
+                            <div class="move-btns">
+                                <button class="mbtn" @onclick="() => MoveUp(index)" disabled="@(index == 0)">▲</button>
+                                <button class="mbtn" @onclick="() => MoveDown(index)" disabled="@(index == electivesOnly.Count - 1)">▼</button>
+                            </div>
                         </div>
                     }
                 }
@@ -594,6 +609,7 @@ body{
     private List<Course> allCourses = new();
     private List<Course> selected = new();
     private Course? musicChoice;
+    private int? musicPreference;
 
     private bool HasPredefinedGrade => !string.IsNullOrWhiteSpace(UserSession.Grade);
 
@@ -625,13 +641,15 @@ body{
         {
             try
             {
-                var enrolledCourses = await ClassListService.GetClassesForStudentAsync(UserSession.UserId);
+                var enrollmentsWithPrefs = await ClassListService.GetStudentEnrollmentsWithPreferencesAsync(UserSession.UserId);
 
                 // Separate enrolled courses into required, music, and electives
-                foreach (var enrolledCourse in enrolledCourses)
+                var electivesWithPrefs = new List<(Course course, int? preference)>();
+
+                foreach (var enrollment in enrollmentsWithPrefs)
                 {
                     // Find the matching course from allCourses to maintain reference equality
-                    var course = allCourses.FirstOrDefault(c => c.Id == enrolledCourse.Id);
+                    var course = allCourses.FirstOrDefault(c => c.Id == enrollment.CourseID);
                     if (course == null)
                         continue;
 
@@ -643,16 +661,20 @@ body{
                     if (course.MusicChoice)
                     {
                         musicChoice = course;
+                        musicPreference = enrollment.Preference;
                     }
                     else
                     {
-                        // Add to selected electives
-                        if (!selected.Any(c => c.Id == course.Id))
-                        {
-                            selected.Add(course);
-                        }
+                        // Add to electives with preference
+                        electivesWithPrefs.Add((course, enrollment.Preference));
                     }
                 }
+
+                // Sort electives by preference (nulls last) and add to selected list
+                selected = electivesWithPrefs
+                    .OrderBy(x => x.preference ?? int.MaxValue)
+                    .Select(x => x.course)
+                    .ToList();
             }
             catch (Exception ex)
             {
@@ -684,6 +706,9 @@ body{
     private decimal TotalCredits =>
         SelectedCourses.Sum(c => (decimal)c.Credits);
 
+    private decimal EstimatedStudyHalls =>
+        TotalCredits - 8.25m;
+
     private int CreditPercent =>
         (int)Math.Min(100, (TotalCredits / 8.25m) * 100);
 
@@ -713,6 +738,32 @@ body{
     private void ToggleMusic(Course c)
     {
         musicChoice = (musicChoice != null && musicChoice.Id == c.Id) ? null : c;
+    }
+
+    private void MoveUp(int index)
+    {
+        if (index <= 0) return;
+
+        var electivesOnly = selected.Where(c => !c.IsRequired).ToList();
+        var temp = electivesOnly[index];
+        electivesOnly[index] = electivesOnly[index - 1];
+        electivesOnly[index - 1] = temp;
+
+        // Rebuild selected list
+        selected = RequiredCourses.Concat(electivesOnly).ToList();
+    }
+
+    private void MoveDown(int index)
+    {
+        var electivesOnly = selected.Where(c => !c.IsRequired).ToList();
+        if (index >= electivesOnly.Count - 1) return;
+
+        var temp = electivesOnly[index];
+        electivesOnly[index] = electivesOnly[index + 1];
+        electivesOnly[index + 1] = temp;
+
+        // Rebuild selected list
+        selected = RequiredCourses.Concat(electivesOnly).ToList();
     }
 
     private bool IsSelected(Course c) =>
@@ -752,20 +803,40 @@ body{
                 await ClassListService.UnenrollStudentAsync(UserSession.UserId, course.Id);
             }
 
-            // Enroll in all selected courses
+            // Prepare preference assignments
+            int currentPreference = 1;
             int successCount = 0;
-            foreach (var course in SelectedCourses)
+
+            // Enroll in music choice first (if selected)
+            if (musicChoice != null)
             {
-                bool success = await ClassListService.EnrollStudentAsync(UserSession.UserId, course.Id);
-                if (success)
-                {
-                    successCount++;
-                }
+                bool success = await ClassListService.EnrollStudentWithPreferenceAsync(
+                    UserSession.UserId, musicChoice.Id, currentPreference);
+                if (success) successCount++;
+                currentPreference++;
+            }
+
+            // Enroll in required courses (no preference)
+            foreach (var course in RequiredCourses)
+            {
+                bool success = await ClassListService.EnrollStudentWithPreferenceAsync(
+                    UserSession.UserId, course.Id, null);
+                if (success) successCount++;
+            }
+
+            // Enroll in electives with preferences
+            var electivesOnly = selected.Where(c => !c.IsRequired).ToList();
+            foreach (var course in electivesOnly)
+            {
+                bool success = await ClassListService.EnrollStudentWithPreferenceAsync(
+                    UserSession.UserId, course.Id, currentPreference);
+                if (success) successCount++;
+                currentPreference++;
             }
 
             if (successCount == SelectedCourses.Count())
             {
-                statusMessage = $"Successfully enrolled in {successCount} course{(successCount != 1 ? "s" : "")}!";
+                statusMessage = $"Successfully enrolled in {successCount} course{(successCount != 1 ? "s" : "")} with preferences saved!";
                 isError = false;
             }
             else
@@ -784,5 +855,4 @@ body{
             isSubmitting = false;
         }
     }
-
-    }
+}

@@ -271,16 +271,11 @@
         try
         {
             allCourses = await ClassListService.GetClassesAsync();
-            
+
             coursesByDepartment = allCourses
                 .Where(c => !string.IsNullOrEmpty(c.Department))
                 .GroupBy(c => c.Department)
                 .ToDictionary(g => g.Key, g => g.ToList());
-            
-            if (coursesByDepartment.Any())
-            {
-                expandedDepartments.Add(coursesByDepartment.Keys.First());
-            }
         }
         catch (Exception ex)
         {

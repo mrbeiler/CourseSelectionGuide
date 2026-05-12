@@ -35,4 +35,53 @@ public class SupabaseService
 
         return null;
     }
+
+    public async Task<Users?> Signup(string name, string email, string password, string grade)
+    {
+        // First check if email already exists
+        var encodedEmail = Uri.EscapeDataString(email);
+        var checkResponse = await _http.GetAsync(
+            $"{url}/rest/v1/Users?Email=eq.{encodedEmail}&select=id"
+        );
+
+        if (checkResponse.IsSuccessStatusCode)
+        {
+            var json = await checkResponse.Content.ReadAsStringAsync();
+            var existing = JsonSerializer.Deserialize<List<Users>>(json);
+            if (existing?.Any() == true)
+                return null; // Email already exists
+        }
+
+        // Create new user without id field - use PascalCase to match database columns
+        var jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = null // Use exact property names (PascalCase)
+        };
+
+        var newUserData = new
+        {
+            Name = name,
+            Email = email,
+            Password = password,
+            Grade = grade
+        };
+
+        var jsonString = JsonSerializer.Serialize(newUserData, jsonOptions);
+        var body = new StringContent(jsonString, System.Text.Encoding.UTF8, "application/json");
+
+        var request = new HttpRequestMessage(HttpMethod.Post, $"{url}/rest/v1/Users")
+        {
+            Content = body
+        };
+        request.Headers.Add("Prefer", "return=representation");
+
+        var response = await _http.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        var responseJson = await response.Content.ReadAsStringAsync();
+        var createdUsers = JsonSerializer.Deserialize<List<Users>>(responseJson);
+        return createdUsers?.FirstOrDefault();
+    }
 }

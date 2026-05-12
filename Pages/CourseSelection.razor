@@ -670,11 +670,13 @@ body{
                     }
                 }
 
-                // Sort electives by preference (nulls last) and add to selected list
-                selected = electivesWithPrefs
+                // Sort electives by preference (nulls last) and combine with required courses
+                var sortedElectives = electivesWithPrefs
                     .OrderBy(x => x.preference ?? int.MaxValue)
                     .Select(x => x.course)
                     .ToList();
+
+                selected = RequiredCourses.Concat(sortedElectives).ToList();
             }
             catch (Exception ex)
             {

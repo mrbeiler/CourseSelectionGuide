@@ -35,8 +35,24 @@ jobs:
       - name: Update base tag
         run: sed -i 's|<base href="/" />|<base href="/CourseSelectionGuide/" />|g' release/wwwroot/index.html
 
-      - name: Copy index.html to 404.html
-        run: cp release/wwwroot/index.html release/wwwroot/404.html
+      - name: Create 404.html for SPA routing
+        run: |
+          cat > release/wwwroot/404.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <script>
+              sessionStorage.redirect = location.href;
+            </script>
+            <meta http-equiv="refresh" content="0;URL='/CourseSelectionGuide/'">
+          </head>
+          </html>
+          EOF
+
+      - name: Add redirect script to index.html
+        run: |
+          sed -i '/<head>/a\    <script>\n      (function(){\n        var redirect = sessionStorage.redirect;\n        delete sessionStorage.redirect;\n        if (redirect && redirect != location.href) {\n          history.replaceState(null, null, redirect);\n        }\n      })();\n    </script>' release/wwwroot/index.html
 
       - name: Add .nojekyll file
         run: touch release/wwwroot/.nojekyll

@@ -707,7 +707,7 @@ body{
         SelectedCourses.Sum(c => (decimal)c.Credits);
 
     private decimal EstimatedStudyHalls =>
-        TotalCredits - 8.25m;
+        8.25m - TotalCredits;
 
     private int CreditPercent =>
         (int)Math.Min(100, (TotalCredits / 8.25m) * 100);

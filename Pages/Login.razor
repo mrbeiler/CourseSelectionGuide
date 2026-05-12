@@ -60,7 +60,7 @@
             UserSession.Grade = user.Grade;
 
             await Storage.SaveAsync(UserSession);
-            Nav.NavigateTo("courselist");
+            Nav.NavigateTo("courseselection");
         }
         else
         {

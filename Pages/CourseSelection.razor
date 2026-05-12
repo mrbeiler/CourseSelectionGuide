@@ -473,14 +473,25 @@ body{
 
         <div class="divider"></div>
 
-        <!-- SEARCH -->
-        <input class="search-input" placeholder="Search courses..."
-               @bind="search" @bind:event="oninput" />
-
         <!-- ELECTIVES -->
         <div class="section-heading" style="margin-top:14px">
             <h2>Elective Courses</h2>
             <span class="pill-count">@FilteredElectives.Count()</span>
+        </div>
+
+        <!-- SEARCH -->
+        <input class="search-input" placeholder="Search courses..."
+               @bind="search" @bind:event="oninput" />
+
+        <!-- DEPARTMENT TABS -->
+        <div class="dept-tabs">
+            @foreach (var dept in AvailableDepartments)
+            {
+                <button class="dept-tab @(activeDepartment == dept ? "active" : "")"
+                        @onclick="() => { activeDepartment = dept; }">
+                    @dept
+                </button>
+            }
         </div>
 
         @foreach (var c in FilteredElectives)
@@ -513,20 +524,33 @@ body{
     <div class="right">
 
         <div class="sidebar-section">
-            <div class="sidebar-label">Credit Summary</div>
+            <div class="sidebar-label">Credit Summary (6.25 credits required)</div>
 
             <div class="credit-display">
-                <div class="credit-big">@TotalCredits.ToString("0.##")</div>
-                <div class="credit-denom">/ 8.25 credits</div>
+                <div class="credit-main-row">
+                    <div class="credit-big">@TotalCredits.ToString("0.##")</div>
+                    <div class="credit-denom">/ 6.25 credits</div>
+                </div>
 
                 <div class="credit-bar-track">
                     <div class="credit-bar-fill"
                          style="width:@CreditPercent%"></div>
                 </div>
+
+                <div class="credit-rows">
+                    <div class="credit-stat">
+                        <div class="credit-stat-val">@RequiredCredits.ToString("0.##")</div>
+                        <div class="credit-stat-key">Required</div>
+                    </div>
+                    <div class="credit-stat">
+                        <div class="credit-stat-val">@ElectiveCredits.ToString("0.##")</div>
+                        <div class="credit-stat-key">Electives</div>
+                    </div>
+                </div>
             </div>
 
             <div class="study-hall-badge">
-                <span class="sh-label">Est. Study Halls (approx.)</span>
+                <span class="sh-label">Est. Study Halls / Day</span>
                 <span class="sh-val">@EstimatedStudyHalls.ToString("0.##")</span>
             </div>
         </div>
@@ -610,6 +634,7 @@ body{
     private List<Course> selected = new();
     private Course? musicChoice;
     private int? musicPreference;
+    private string activeDepartment = "All";
 
     private bool HasPredefinedGrade => !string.IsNullOrWhiteSpace(UserSession.Grade);
 
@@ -618,18 +643,10 @@ body{
     {
         allCourses = await ClassListService.GetClassesAsync();
 
-        // If user has a grade in session, set to next year's grade (current + 1)
-        if (HasPredefinedGrade && int.TryParse(UserSession.Grade, out int currentGrade))
+        // If user has a grade in session, use it directly (it's already the grade they're selecting for)
+        if (HasPredefinedGrade && int.TryParse(UserSession.Grade, out int selectionGrade))
         {
-            int nextGrade = currentGrade + 1;
-            if (nextGrade <= 12)
-            {
-                SetGrade(nextGrade);
-            }
-            else
-            {
-                SetGrade(12); // Cap at grade 12
-            }
+            SetGrade(selectionGrade);
         }
         else
         {
@@ -698,9 +715,13 @@ body{
 
     private IEnumerable<Course> FilteredElectives =>
         Electives.Where(c =>
-            string.IsNullOrWhiteSpace(search) ||
+            (activeDepartment == "All" || c.Department == activeDepartment) &&
+            (string.IsNullOrWhiteSpace(search) ||
             c.Name.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-            c.Department.Contains(search, StringComparison.OrdinalIgnoreCase));
+            c.Department.Contains(search, StringComparison.OrdinalIgnoreCase)));
+
+    private IEnumerable<string> AvailableDepartments =>
+        new[] { "All" }.Concat(Electives.Select(c => c.Department).Distinct().OrderBy(d => d));
 
     private IEnumerable<Course> SelectedCourses =>
         selected.Concat(musicChoice != null ? new[] { musicChoice } : Enumerable.Empty<Course>());
@@ -708,11 +729,17 @@ body{
     private decimal TotalCredits =>
         SelectedCourses.Sum(c => (decimal)c.Credits);
 
+    private decimal RequiredCredits =>
+        RequiredCourses.Sum(c => (decimal)c.Credits) + (musicChoice != null ? (decimal)musicChoice.Credits : 0);
+
+    private decimal ElectiveCredits =>
+        TotalCredits - RequiredCredits;
+
     private decimal EstimatedStudyHalls =>
         8.25m - TotalCredits;
 
     private int CreditPercent =>
-        (int)Math.Min(100, (TotalCredits / 8.25m) * 100);
+        (int)Math.Min(100, (TotalCredits / 6.25m) * 100);
 
     private IEnumerable<Course> MusicOptions =>
         allCourses.Where(c => c.MusicChoice && c.GradeMin <= grade && c.GradeMax >= grade);

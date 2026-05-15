@@ -1,0 +1,215 @@
+@page "/admin/students"
+@inject SupabaseService SupabaseService
+@inject ClassListService ClassListService
+@using CourseSelectionGuide.Models
+
+<PageTitle>Admin - Students</PageTitle>
+
+<div style="padding: 20px; max-width: 1400px; margin: 0 auto;">
+    <h1 style="margin-bottom: 20px; color: #2d4a32;">Student Course Selections</h1>
+
+    @if (isLoading)
+    {
+        <p>Loading students...</p>
+    }
+    else if (students == null || !students.Any())
+    {
+        <p>No students found.</p>
+    }
+    else
+    {
+        <div style="margin-bottom: 20px;">
+            <input type="text" 
+                   @bind="searchText" 
+                   @bind:event="oninput"
+                   placeholder="Search by name, email, or grade..." 
+                   style="padding: 10px; width: 300px; border: 1px solid #ccc; border-radius: 4px;" />
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <thead>
+                <tr style="background-color: #2d4a32; color: white;">
+                    <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Student Name</th>
+                    <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Email</th>
+                    <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Grade</th>
+                    <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Courses Selected</th>
+                    <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var student in FilteredStudents)
+                {
+                    <tr style="border-bottom: 1px solid #ddd;">
+                        <td style="padding: 12px; border: 1px solid #ddd;">@student.Name</td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">@student.Email</td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">@student.Grade</td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">
+                            @if (studentCourses.ContainsKey(student.Id))
+                            {
+                                var courses = studentCourses[student.Id];
+                                if (courses.Any())
+                                {
+                                    <div style="font-size: 0.9em;">
+                                        @foreach (var enrollment in courses.OrderBy(c => c.Preference ?? 999))
+                                        {
+                                            <div style="margin: 4px 0;">
+                                                <span style="font-weight: 600; color: #2d4a32;">
+                                                    @(enrollment.Preference.HasValue ? $"{enrollment.Preference}." : "•")
+                                                </span>
+                                                @enrollment.Classes.Name
+                                                <span style="color: #666; font-size: 0.85em;">
+                                                    (@enrollment.Classes.Department)
+                                                </span>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <em style="color: #999;">No courses selected</em>
+                                }
+                            }
+                            else
+                            {
+                                <em style="color: #999;">Loading...</em>
+                            }
+                        </td>
+                        <td style="padding: 12px; text-align: center; border: 1px solid #ddd;">
+                            <button @onclick="() => ToggleDetails(student.Id)" 
+                                    style="padding: 6px 12px; background-color: #3d6645; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                @(expandedStudents.Contains(student.Id) ? "Hide Details" : "Show Details")
+                            </button>
+                        </td>
+                    </tr>
+                    @if (expandedStudents.Contains(student.Id) && studentCourses.ContainsKey(student.Id))
+                    {
+                        <tr style="background-color: #faf7f0;">
+                            <td colspan="5" style="padding: 20px; border: 1px solid #ddd;">
+                                <h3 style="margin-bottom: 15px; color: #2d4a32;">Course Details for @student.Name</h3>
+                                @if (studentCourses[student.Id].Any())
+                                {
+                                    <div style="display: grid; gap: 15px;">
+                                        @foreach (var enrollment in studentCourses[student.Id].OrderBy(c => c.Preference ?? 999))
+                                        {
+                                            <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                                <div style="display: flex; justify-content: space-between; align-items: start;">
+                                                    <div>
+                                                        <h4 style="margin: 0 0 8px 0; color: #2d4a32;">
+                                                            @if (enrollment.Preference.HasValue)
+                                                            {
+                                                                <span style="background: #b5872a; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.9em; margin-right: 8px;">
+                                                                    Preference #@enrollment.Preference
+                                                                </span>
+                                                            }
+                                                            @enrollment.Classes.Name
+                                                        </h4>
+                                                        <p style="margin: 4px 0; color: #666;">
+                                                            <strong>Department:</strong> @enrollment.Classes.Department
+                                                        </p>
+                                                        <p style="margin: 4px 0; color: #666;">
+                                                            <strong>Credits:</strong> @enrollment.Classes.Credits
+                                                        </p>
+                                                        <p style="margin: 4px 0; color: #666;">
+                                                            <strong>Grade Range:</strong> @enrollment.Classes.GradeMin - @enrollment.Classes.GradeMax
+                                                        </p>
+                                                        @if (!string.IsNullOrEmpty(enrollment.Classes.Description))
+                                                        {
+                                                            <p style="margin: 8px 0 0 0; color: #3a4a3d; font-style: italic;">
+                                                                @enrollment.Classes.Description
+                                                            </p>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <p style="color: #999; font-style: italic;">This student has not selected any courses yet.</p>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+
+        <div style="margin-top: 20px; color: #666;">
+            <strong>Total Students:</strong> @FilteredStudents.Count() / @students.Count
+        </div>
+    }
+</div>
+
+@code {
+    private List<Users>? students;
+    private Dictionary<long, List<StudentCourseWithPreference>> studentCourses = new();
+    private HashSet<long> expandedStudents = new();
+    private bool isLoading = true;
+    private string searchText = "";
+
+    private IEnumerable<Users> FilteredStudents
+    {
+        get
+        {
+            if (students == null) return Enumerable.Empty<Users>();
+
+            if (string.IsNullOrWhiteSpace(searchText))
+                return students;
+
+            var search = searchText.ToLower();
+            return students.Where(s =>
+                s.Name.ToLower().Contains(search) ||
+                s.Email.ToLower().Contains(search) ||
+                s.Grade.ToLower().Contains(search)
+            );
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            students = await SupabaseService.GetAllStudentsAsync();
+
+            // Load course selections for each student
+            if (students != null)
+            {
+                foreach (var student in students)
+                {
+                    try
+                    {
+                        var courses = await ClassListService.GetStudentEnrollmentsWithPreferencesAsync(student.Id);
+                        studentCourses[student.Id] = courses;
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error loading courses for student {student.Id}: {ex.Message}");
+                        studentCourses[student.Id] = new List<StudentCourseWithPreference>();
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading students: {ex.Message}");
+            students = new List<Users>();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void ToggleDetails(long studentId)
+    {
+        if (expandedStudents.Contains(studentId))
+        {
+            expandedStudents.Remove(studentId);
+        }
+        else
+        {
+            expandedStudents.Add(studentId);
+        }
+    }
+}

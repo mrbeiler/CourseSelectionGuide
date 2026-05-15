@@ -1,0 +1,278 @@
+@page "/admin/courses"
+@inject ClassListService ClassListService
+@using CourseSelectionGuide.Models
+
+<PageTitle>Admin - Courses</PageTitle>
+
+<div style="padding: 20px; max-width: 1400px; margin: 0 auto;">
+    <h1 style="margin-bottom: 20px; color: #2d4a32;">Course Enrollments</h1>
+
+    @if (isLoading)
+    {
+        <p>Loading courses...</p>
+    }
+    else if (courses == null || !courses.Any())
+    {
+        <p>No courses found.</p>
+    }
+    else
+    {
+        <div style="margin-bottom: 20px;">
+            <input type="text" 
+                   @bind="searchText" 
+                   @bind:event="oninput"
+                   placeholder="Search by course name or department..." 
+                   style="padding: 10px; width: 300px; border: 1px solid #ccc; border-radius: 4px;" />
+
+            <select @bind="filterDepartment" style="padding: 10px; margin-left: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                <option value="">All Departments</option>
+                @foreach (var dept in departments)
+                {
+                    <option value="@dept">@dept</option>
+                }
+            </select>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <thead>
+                <tr style="background-color: #2d4a32; color: white;">
+                    <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Course Name</th>
+                    <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Department</th>
+                    <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">Credits</th>
+                    <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">Grade Range</th>
+                    <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">Students Enrolled</th>
+                    <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var course in FilteredCourses)
+                {
+                    <tr style="border-bottom: 1px solid #ddd;">
+                        <td style="padding: 12px; border: 1px solid #ddd;">
+                            <strong>@course.Name</strong>
+                            @if (course.IsRequired)
+                            {
+                                <span style="background: #8b2e2e; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.75em; margin-left: 8px;">
+                                    REQUIRED
+                                </span>
+                            }
+                        </td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">@course.Department</td>
+                        <td style="padding: 12px; text-align: center; border: 1px solid #ddd;">@course.Credits</td>
+                        <td style="padding: 12px; text-align: center; border: 1px solid #ddd;">@course.GradeMin - @course.GradeMax</td>
+                        <td style="padding: 12px; text-align: center; border: 1px solid #ddd;">
+                            @if (courseEnrollments.ContainsKey(course.Id))
+                            {
+                                <strong style="color: #2d4a32;">@courseEnrollments[course.Id].Count</strong>
+                            }
+                            else
+                            {
+                                <span style="color: #999;">0</span>
+                            }
+                        </td>
+                        <td style="padding: 12px; text-align: center; border: 1px solid #ddd;">
+                            <button @onclick="() => ToggleEnrollments(course.Id)" 
+                                    style="padding: 6px 12px; background-color: #3d6645; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                @(expandedCourses.Contains(course.Id) ? "Hide Students" : "View Students")
+                            </button>
+                        </td>
+                    </tr>
+                    @if (expandedCourses.Contains(course.Id))
+                    {
+                        <tr style="background-color: #faf7f0;">
+                            <td colspan="6" style="padding: 20px; border: 1px solid #ddd;">
+                                <h3 style="margin-bottom: 15px; color: #2d4a32;">Students Enrolled in @course.Name</h3>
+
+                                @if (!string.IsNullOrEmpty(course.Description))
+                                {
+                                    <div style="background: white; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #b5872a;">
+                                        <strong>Course Description:</strong>
+                                        <p style="margin: 8px 0 0 0; color: #3a4a3d;">@course.Description</p>
+                                    </div>
+                                }
+
+                                @if (courseEnrollments.ContainsKey(course.Id) && courseEnrollments[course.Id].Any())
+                                {
+                                    <table style="width: 100%; border-collapse: collapse; background: white;">
+                                        <thead>
+                                            <tr style="background-color: #e4dccb;">
+                                                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Student Name</th>
+                                                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Email</th>
+                                                <th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Grade</th>
+                                                <th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Preference</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var enrollment in courseEnrollments[course.Id].OrderBy(e => e.Preference ?? 999).ThenBy(e => e.Student.Name))
+                                            {
+                                                <tr style="border-bottom: 1px solid #ddd;">
+                                                    <td style="padding: 10px; border: 1px solid #ddd;">@enrollment.Student.Name</td>
+                                                    <td style="padding: 10px; border: 1px solid #ddd;">@enrollment.Student.Email</td>
+                                                    <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">@enrollment.Student.Grade</td>
+                                                    <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">
+                                                        @if (enrollment.Preference.HasValue)
+                                                        {
+                                                            <span style="background: #b5872a; color: white; padding: 4px 10px; border-radius: 4px; font-weight: 600;">
+                                                                #@enrollment.Preference
+                                                            </span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span style="color: #999; font-style: italic;">Not set</span>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+
+                                    <div style="margin-top: 15px; padding: 12px; background: white; border-radius: 6px;">
+                                        <strong>Enrollment Statistics:</strong>
+                                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 10px;">
+                                            <div>
+                                                <span style="color: #666;">Total Enrolled:</span> 
+                                                <strong style="color: #2d4a32;">@courseEnrollments[course.Id].Count</strong>
+                                            </div>
+                                            <div>
+                                                <span style="color: #666;">With Preference:</span> 
+                                                <strong style="color: #2d4a32;">@courseEnrollments[course.Id].Count(e => e.Preference.HasValue)</strong>
+                                            </div>
+                                            @if (courseEnrollments[course.Id].Any(e => e.Preference.HasValue))
+                                            {
+                                                <div>
+                                                    <span style="color: #666;">Avg Preference:</span> 
+                                                    <strong style="color: #2d4a32;">@courseEnrollments[course.Id].Where(e => e.Preference.HasValue).Average(e => e.Preference!.Value).ToString("F1")</strong>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div style="background: white; padding: 20px; border-radius: 6px; text-align: center; color: #999;">
+                                        <p style="font-style: italic;">No students have enrolled in this course yet.</p>
+                                    </div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+
+        <div style="margin-top: 20px; color: #666; display: flex; justify-content: space-between;">
+            <div>
+                <strong>Total Courses:</strong> @FilteredCourses.Count() / @courses.Count
+            </div>
+            <div>
+                <strong>Total Enrollments:</strong> @courseEnrollments.Values.Sum(list => list.Count)
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Course>? courses;
+    private Dictionary<long, List<StudentEnrollment>> courseEnrollments = new();
+    private HashSet<long> expandedCourses = new();
+    private List<string> departments = new();
+    private bool isLoading = true;
+    private string searchText = "";
+    private string filterDepartment = "";
+
+    private IEnumerable<Course> FilteredCourses
+    {
+        get
+        {
+            if (courses == null) return Enumerable.Empty<Course>();
+
+            var filtered = courses.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(searchText))
+            {
+                var search = searchText.ToLower();
+                filtered = filtered.Where(c =>
+                    c.Name.ToLower().Contains(search) ||
+                    c.Department.ToLower().Contains(search)
+                );
+            }
+
+            if (!string.IsNullOrWhiteSpace(filterDepartment))
+            {
+                filtered = filtered.Where(c => c.Department == filterDepartment);
+            }
+
+            return filtered.OrderBy(c => c.Department).ThenBy(c => c.Name);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            courses = await ClassListService.GetClassesAsync();
+
+            if (courses != null && courses.Any())
+            {
+                // Get unique departments
+                departments = courses
+                    .Select(c => c.Department)
+                    .Distinct()
+                    .OrderBy(d => d)
+                    .ToList();
+
+                // Load enrollments for each course
+                foreach (var course in courses)
+                {
+                    try
+                    {
+                        var enrollments = await ClassListService.GetStudentsForCourseAsync(course.Id);
+                        courseEnrollments[course.Id] = enrollments;
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error loading enrollments for course {course.Id}: {ex.Message}");
+                        courseEnrollments[course.Id] = new List<StudentEnrollment>();
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading courses: {ex.Message}");
+            courses = new List<Course>();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ToggleEnrollments(long courseId)
+    {
+        if (expandedCourses.Contains(courseId))
+        {
+            expandedCourses.Remove(courseId);
+        }
+        else
+        {
+            expandedCourses.Add(courseId);
+
+            // Load enrollments if not already loaded
+            if (!courseEnrollments.ContainsKey(courseId))
+            {
+                try
+                {
+                    var enrollments = await ClassListService.GetStudentsForCourseAsync(courseId);
+                    courseEnrollments[courseId] = enrollments;
+                    StateHasChanged();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error loading enrollments: {ex.Message}");
+                    courseEnrollments[courseId] = new List<StudentEnrollment>();
+                }
+            }
+        }
+    }
+}

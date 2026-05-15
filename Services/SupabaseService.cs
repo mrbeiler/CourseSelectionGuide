@@ -84,4 +84,16 @@ public class SupabaseService
         var createdUsers = JsonSerializer.Deserialize<List<Users>>(responseJson);
         return createdUsers?.FirstOrDefault();
     }
+
+    // Get all students
+    public async Task<List<Users>> GetAllStudentsAsync()
+    {
+        var response = await _http.GetAsync($"{url}/rest/v1/Users?select=*");
+
+        if (!response.IsSuccessStatusCode)
+            return new List<Users>();
+
+        var json = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<List<Users>>(json) ?? new List<Users>();
+    }
 }

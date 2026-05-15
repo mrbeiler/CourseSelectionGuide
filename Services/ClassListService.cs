@@ -174,6 +174,27 @@ public class ClassListService
         var response = await _http.DeleteAsync($"{BaseUrl}/Classes?id=eq.{id}");
         return response.IsSuccessStatusCode;
     }
+
+    // Get all students enrolled in a specific course
+    public async Task<List<StudentEnrollment>> GetStudentsForCourseAsync(long courseId)
+    {
+        var response = await _http.GetAsync(
+            $"{BaseUrl}/StudentCourses?CourseID=eq.{courseId}&select=StudentID,Preference,Users(*)"
+        );
+
+        if (!response.IsSuccessStatusCode)
+            return new List<StudentEnrollment>();
+
+        var json = await response.Content.ReadAsStringAsync();
+        var results = JsonSerializer.Deserialize<List<StudentEnrollmentRow>>(json) ?? new();
+
+        return results.Select(r => new StudentEnrollment
+        {
+            StudentID = r.StudentID,
+            Preference = r.Preference,
+            Student = r.Users
+        }).ToList();
+    }
 }
 
 public class StudentCourseInsert
@@ -203,4 +224,24 @@ public class StudentCourseWithPreference
 
     [JsonPropertyName("Classes")]
     public Course Classes { get; set; } = new();
+}
+
+// Model for student enrollment with user details
+public class StudentEnrollmentRow
+{
+    [JsonPropertyName("StudentID")]
+    public long StudentID { get; set; }
+
+    [JsonPropertyName("Preference")]
+    public int? Preference { get; set; }
+
+    [JsonPropertyName("Users")]
+    public Users Users { get; set; } = new();
+}
+
+public class StudentEnrollment
+{
+    public long StudentID { get; set; }
+    public int? Preference { get; set; }
+    public Users Student { get; set; } = new();
 }
